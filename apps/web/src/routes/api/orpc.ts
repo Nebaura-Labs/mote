@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { createORPCHandler } from 'orpc'
+import orpcPkg from 'orpc'
 import { appRouter } from '../../api/router'
+
+const { createORPCHandler } = orpcPkg as any
 
 const handler = createORPCHandler({
   router: appRouter,
