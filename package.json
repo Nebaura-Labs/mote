@@ -21,6 +21,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "web:dev": "pnpm --filter @mote/web dev",
     "web:build": "pnpm --filter @mote/web build",
+    "app:dev": "pnpm --filter @mote/mobile start",
     "mobile:start": "pnpm --filter @mote/mobile start",
     "mobile:ios": "pnpm --filter @mote/mobile ios",
     "mobile:android": "pnpm --filter @mote/mobile android",
