@@ -1,0 +1,43 @@
+{
+  "name": "mote",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mote - An open-source ESP32-S3 voice companion for Clawd",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nebaura-Labs/mote.git"
+  },
+  "author": "Jonah <jonah@jonahships.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "web:dev": "pnpm --filter @mote/web dev",
+    "web:build": "pnpm --filter @mote/web build",
+    "mobile:start": "pnpm --filter @mote/mobile start",
+    "mobile:ios": "pnpm --filter @mote/mobile ios",
+    "mobile:android": "pnpm --filter @mote/mobile android",
+    "db:generate": "pnpm --filter @mote/web db:generate",
+    "db:migrate": "pnpm --filter @mote/web db:migrate",
+    "db:push": "pnpm --filter @mote/web db:push",
+    "db:studio": "pnpm --filter @mote/web db:studio",
+    "firmware:build": "cd firmware && pio run",
+    "firmware:upload": "cd firmware && pio run -t upload",
+    "firmware:monitor": "cd firmware && pio device monitor"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.4",
+    "turbo": "^1.11.3"
+  },
+  "packageManager": "pnpm@8.15.1",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -108,43 +108,101 @@ The **Mote** is a voice assistant companion device that brings your personal AI 
 
 ## 📁 Project Structure
 
+This is a **monorepo** containing all Mote components:
+
 ```
-mote-firmware/
-├── src/
-│   └── main.cpp              # Main firmware entry point
-├── include/                  # Header files
-├── lib/                      # Project-specific libraries
-├── test/                     # Unit tests
-├── platformio.ini            # PlatformIO configuration
-└── CLAUDE.md                 # AI assistant context
+mote/
+├── firmware/                 # ESP32-S3 Firmware (PlatformIO)
+│   ├── src/
+│   │   └── main.cpp          # Main firmware entry point
+│   ├── include/              # Header files
+│   ├── lib/                  # Firmware libraries
+│   ├── test/                 # Unit tests
+│   ├── platformio.ini        # PlatformIO configuration
+│   └── CLAUDE.md             # Firmware developer docs
+│
+├── apps/
+│   └── mobile/               # Expo/React Native Bridge App
+│       ├── src/
+│       └── package.json
+│
+├── packages/
+│   └── shared/               # Shared types and constants
+│       └── src/
+│           └── index.ts      # BLE protocol, device types, etc.
+│
+├── package.json              # Root workspace config
+├── turbo.json                # Turborepo config
+├── pnpm-workspace.yaml       # PNPM workspace config
+└── README.md                 # This file
 ```
 
 ---
 
 ## 🔧 Development
 
-### Common Commands
+### Setup
 
 ```bash
-# Build
-pio run
+# Install dependencies
+pnpm install
 
-# Upload
-pio run -t upload
+# Or use npm/yarn
+npm install
+```
 
-# Clean build
-pio run -t clean
+### Monorepo Commands
 
-# Monitor serial
-pio device monitor
+```bash
+# Run all dev servers
+pnpm dev
 
-# Run tests
-pio test
+# Build all packages
+pnpm build
+
+# Lint all packages
+pnpm lint
+
+# Format code
+pnpm format
+```
+
+### Firmware Development (ESP32-S3)
+
+```bash
+# Build firmware
+pnpm firmware:build
+# Or: cd firmware && pio run
+
+# Upload to device
+pnpm firmware:upload
+# Or: cd firmware && pio run -t upload
+
+# Monitor serial output
+pnpm firmware:monitor
+# Or: cd firmware && pio device monitor
+
+# All at once
+cd firmware && pio run -t upload && pio device monitor
+```
+
+### Mobile App Development
+
+```bash
+# Start Expo dev server
+cd apps/mobile
+pnpm start
+
+# Run on iOS
+pnpm ios
+
+# Run on Android
+pnpm android
 ```
 
 ### Pin Configuration
 
-All GPIO pins are defined in the source code:
+All GPIO pins are defined in `packages/shared/src/index.ts`:
 
 - **Display (SPI):** GPIO 2, 4, 5, 17, 18, 23
 - **Microphone (I2S):** GPIO 14, 15, 32
@@ -152,13 +210,12 @@ All GPIO pins are defined in the source code:
 - **Buttons:** GPIO 12, 27, 33
 - **Battery ADC:** GPIO 34
 
-See [CLAUDE.md](./CLAUDE.md) for detailed pin mappings and architecture.
+See [firmware/CLAUDE.md](./firmware/CLAUDE.md) for detailed firmware architecture.
 
 ---
 
 ## 🔗 Related Projects
 
-- **[Mote Bridge App](https://github.com/nebaura-labs/mote-app)** - Expo/React Native mobile app
 - **[clawd.bot](https://clawd.bot)** - Personal AI gateway backend
 - **[Nebaura Labs](https://nebaura.studio)** - Official website and hardware kits
 
