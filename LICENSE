@@ -1,0 +1,97 @@
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+
+Copyright (c) 2025 Nebaura Labs
+
+==============================================================================
+
+CREATIVE COMMONS CORPORATION IS NOT A LAW FIRM AND DOES NOT PROVIDE LEGAL
+SERVICES. DISTRIBUTION OF THIS LICENSE DOES NOT CREATE AN ATTORNEY-CLIENT
+RELATIONSHIP. CREATIVE COMMONS PROVIDES THIS INFORMATION ON AN "AS-IS" BASIS.
+CREATIVE COMMONS MAKES NO WARRANTIES REGARDING THE INFORMATION PROVIDED, AND
+DISCLAIMS LIABILITY FOR DAMAGES RESULTING FROM ITS USE.
+
+==============================================================================
+
+License
+
+THE WORK (AS DEFINED BELOW) IS PROVIDED UNDER THE TERMS OF THIS CREATIVE
+COMMONS PUBLIC LICENSE ("CCPL" OR "LICENSE"). THE WORK IS PROTECTED BY
+COPYRIGHT AND/OR OTHER APPLICABLE LAW. ANY USE OF THE WORK OTHER THAN AS
+AUTHORIZED UNDER THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+
+BY EXERCISING ANY RIGHTS TO THE WORK PROVIDED HERE, YOU ACCEPT AND AGREE TO
+BE BOUND BY THE TERMS OF THIS LICENSE. TO THE EXTENT THIS LICENSE MAY BE
+CONSIDERED TO BE A CONTRACT, THE LICENSOR GRANTS YOU THE RIGHTS CONTAINED
+HERE IN CONSIDERATION OF YOUR ACCEPTANCE OF SUCH TERMS AND CONDITIONS.
+
+==============================================================================
+
+Summary of License Terms (Human-Readable):
+
+You are free to:
+  - Share — copy and redistribute the material in any medium or format
+  - Adapt — remix, transform, and build upon the material
+
+Under the following terms:
+  - Attribution — You must give appropriate credit to Nebaura Labs, provide
+    a link to the license, and indicate if changes were made.
+
+  - NonCommercial — You may NOT use the material for commercial purposes.
+    This means you cannot sell hardware devices running this firmware or
+    use this code in commercial products without explicit permission.
+
+  - ShareAlike — If you remix, transform, or build upon the material, you
+    must distribute your contributions under the same license as the original.
+
+The licensor cannot revoke these freedoms as long as you follow the license
+terms.
+
+==============================================================================
+
+What This Means for the Nebaura Labs Mote Project:
+
+✅ ALLOWED (Personal Use):
+  - Build your own Mote device for personal use
+  - Modify the firmware for your own projects
+  - Share your modifications with others (under this same license)
+  - Use for educational purposes
+  - Create derivative works for personal use
+
+❌ NOT ALLOWED (Commercial Use):
+  - Selling hardware devices with this firmware
+  - Manufacturing and selling Mote-compatible devices
+  - Using this code in commercial products or services
+  - Removing attribution or license notices
+
+💼 COMMERCIAL LICENSING:
+  If you wish to use this firmware for commercial purposes (selling hardware,
+  creating commercial products, etc.), please contact Nebaura Labs at:
+
+  Email: [contact@nebaura.studio]
+  Website: https://nebaura.studio
+
+  Official Nebaura Labs hardware is available for purchase and uses this
+  same open firmware.
+
+==============================================================================
+
+Full Legal Code
+
+The full legal code for CC BY-NC-SA 4.0 can be found at:
+https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+==============================================================================
+
+DISCLAIMER
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
