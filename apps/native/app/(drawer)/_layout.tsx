@@ -1,17 +1,35 @@
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { Drawer } from "expo-router/drawer";
 import { useThemeColor } from "heroui-native";
-import React, { useCallback } from "react";
-import { Pressable, Text } from "react-native";
+import React, { useCallback, useEffect } from "react";
+import { Text } from "react-native";
 
+import { LoadingScreen } from "@/components/loading-screen";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "expo-router";
 
 function DrawerLayout() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
   const themeColorForeground = useThemeColor("foreground");
   const themeColorBackground = useThemeColor("background");
 
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace("/(auth)");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
   const renderThemeToggle = useCallback(() => <ThemeToggle />, []);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Drawer
@@ -27,9 +45,9 @@ function DrawerLayout() {
       }}
     >
       <Drawer.Screen
-        name="index"
+        name="(tabs)"
         options={{
-          headerTitle: "Home",
+          headerTitle: "Mote",
           drawerLabel: ({ color, focused }) => (
             <Text style={{ color: focused ? color : themeColorForeground }}>Home</Text>
           ),
@@ -39,29 +57,6 @@ function DrawerLayout() {
               size={size}
               color={focused ? color : themeColorForeground}
             />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="(tabs)"
-        options={{
-          headerTitle: "Tabs",
-          drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : themeColorForeground }}>Tabs</Text>
-          ),
-          drawerIcon: ({ size, color, focused }) => (
-            <MaterialIcons
-              name="border-bottom"
-              size={size}
-              color={focused ? color : themeColorForeground}
-            />
-          ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable className="mr-4">
-                <Ionicons name="add-outline" size={24} color={themeColorForeground} />
-              </Pressable>
-            </Link>
           ),
         }}
       />
