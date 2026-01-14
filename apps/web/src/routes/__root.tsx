@@ -1,61 +1,61 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
-import { HeroUIProvider } from '@heroui/react'
+import type { QueryClient } from "@tanstack/react-query";
 
-import Header from '../components/Header'
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
-import globalsCss from '../styles/globals.css?url'
+import type { orpc } from "@/utils/orpc";
 
-export const Route = createRootRoute({
+import { Toaster } from "@/components/ui/sonner";
+
+import Header from "../components/header";
+import appCss from "../index.css?url";
+export interface RouterAppContext {
+  orpc: typeof orpc;
+  queryClient: QueryClient;
+}
+
+export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
       {
-        charSet: 'utf-8',
+        charSet: "utf-8",
       },
       {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        name: "viewport",
+        content: "width=device-width, initial-scale=1",
       },
       {
-        title: 'Mote - Voice Companion for Clawd',
+        title: "My App",
       },
     ],
     links: [
       {
-        rel: 'stylesheet',
-        href: globalsCss,
+        rel: "stylesheet",
+        href: appCss,
       },
     ],
   }),
 
-  shellComponent: RootDocument,
-})
+  component: RootDocument,
+});
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument() {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
       <body>
-        <HeroUIProvider>
+        <div className="grid h-svh grid-rows-[auto_1fr]">
           <Header />
-          {children}
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
-        </HeroUIProvider>
+          <Outlet />
+        </div>
+        <Toaster richColors />
+        <TanStackRouterDevtools position="bottom-left" />
+        <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
         <Scripts />
       </body>
     </html>
-  )
+  );
 }
