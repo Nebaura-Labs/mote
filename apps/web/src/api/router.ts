@@ -1,4 +1,5 @@
-import { createRouter } from 'orpc'
+import orpcPkg from 'orpc'
+const { createRouter } = orpcPkg as any
 import { authRouter } from './auth'
 import { devicesRouter } from './devices'
 import { voiceRouter } from './voice'

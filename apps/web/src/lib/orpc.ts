@@ -1,4 +1,5 @@
-import { createORPCHandler, createProcedure } from 'orpc'
+import orpcPkg from 'orpc'
+const { createORPCHandler, createProcedure } = orpcPkg as any
 import { z } from 'zod'
 import { auth } from '../auth'
 

@@ -1,4 +1,5 @@
-import { createRouter } from 'orpc'
+import orpcPkg from 'orpc'
+const { createRouter } = orpcPkg as any
 import { protectedProcedure } from '../lib/orpc'
 import { z } from 'zod'
 import { db } from '../db'
