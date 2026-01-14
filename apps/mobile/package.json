@@ -2,11 +2,38 @@
   "name": "@mote/mobile",
   "version": "1.0.0",
   "main": "expo-router/entry",
-  "private": true,
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
-  }
+    "web": "expo start --web",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "expo": "~54.0.31",
+    "expo-status-bar": "~3.0.9",
+    "expo-router": "~5.0.8",
+    "expo-linking": "~7.0.3",
+    "expo-constants": "~18.0.3",
+    "expo-av": "~15.0.7",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "5.1.6",
+    "react-native-screens": "~4.7.8",
+    "react-native-ble-plx": "^3.3.4",
+    "@react-native-community/netinfo": "^12.1.0",
+    "@tanstack/react-query": "^5.80.3",
+    "orpc": "^0.1.1",
+    "lucide-react-native": "^0.468.0",
+    "nativewind": "^4.1.23",
+    "zod": "^3.25.76",
+    "@mote/api-client": "workspace:*",
+    "@mote/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "typescript": "~5.9.2",
+    "tailwindcss": "^4.1.18"
+  },
+  "private": true
 }
