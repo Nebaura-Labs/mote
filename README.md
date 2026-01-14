@@ -1,5 +1,7 @@
 # Nebaura Labs Mote - Firmware
 
+**Mote - An open-source ESP32-S3 voice companion for Clawd**
+
 ```
  ███╗   ██╗███████╗██████╗  █████╗ ██╗   ██╗██████╗  █████╗
  ████╗  ██║██╔════╝██╔══██╗██╔══██╗██║   ██║██╔══██╗██╔══██╗
@@ -9,8 +11,6 @@
  ╚═╝  ╚═══╝╚══════╝╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
                          L A B S
 ```
-
-**Open-source ESP32-S3 firmware for the Mote voice assistant companion device.**
 
 Connect to your personal AI powered by [clawd.bot](https://clawd.bot) through a physical device with an animated face, voice interaction, and tactile controls.
 
