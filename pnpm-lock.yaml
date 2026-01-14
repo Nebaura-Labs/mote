@@ -100,7 +100,7 @@ importers:
         specifier: ^0.7.0
         version: 0.7.11(@types/react-dom@19.2.3)(@types/react@19.2.8)(csstype@3.2.3)(react-dom@19.2.3)(react@19.2.3)(solid-js@1.9.10)
       '@tanstack/react-router':
-        specifier: ^1.132.0
+        specifier: ^1.149.3
         version: 1.149.3(react-dom@19.2.3)(react@19.2.3)
       '@tanstack/react-router-devtools':
         specifier: ^1.132.0
@@ -109,7 +109,7 @@ importers:
         specifier: ^1.131.7
         version: 1.149.3(@tanstack/query-core@5.90.17)(@tanstack/react-query@5.90.17)(@tanstack/react-router@1.149.3)(@tanstack/router-core@1.149.3)(react-dom@19.2.3)(react@19.2.3)
       '@tanstack/react-start':
-        specifier: ^1.132.0
+        specifier: ^1.149.4
         version: 1.149.4(react-dom@19.2.3)(react@19.2.3)(vite@7.3.1)
       '@tanstack/router-plugin':
         specifier: ^1.132.0
