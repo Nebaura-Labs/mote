@@ -47,6 +47,25 @@ export const gatewayRouter = {
           })
           .where(eq(gatewayConnection.userId, userId));
 
+        // Also auto-configure clawd.bot Gateway HTTP API for chat
+        const { clawdConnection } = await import("@mote/db");
+        const existingClawd = await db.query.clawdConnection.findFirst({
+          where: eq(clawdConnection.userId, userId),
+        });
+
+        if (!existingClawd) {
+          // Auto-create clawd connection with default token (empty)
+          const clawdId = crypto.randomUUID();
+          await db.insert(clawdConnection).values({
+            id: clawdId,
+            userId,
+            gatewayUrl: "http://localhost:18789", // Standard Gateway HTTP API port
+            tokenEncrypted: encrypt(""), // Empty token by default
+            defaultAgentId: "main",
+            isActive: true,
+          });
+        }
+
         return {
           success: true,
           message: "Gateway configuration updated",
@@ -65,6 +84,18 @@ export const gatewayRouter = {
           projectRoot: input.projectRoot,
           cliPath: input.cliPath,
           isActive: false,
+        });
+
+        // Also auto-configure clawd.bot Gateway HTTP API for chat
+        const { clawdConnection } = await import("@mote/db");
+        const clawdId = crypto.randomUUID();
+        await db.insert(clawdConnection).values({
+          id: clawdId,
+          userId,
+          gatewayUrl: "http://localhost:18789", // Standard Gateway HTTP API port
+          tokenEncrypted: encrypt(""), // Empty token by default
+          defaultAgentId: "main",
+          isActive: true,
         });
 
         return {

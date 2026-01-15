@@ -15,6 +15,13 @@
       "when": 1768468987460,
       "tag": "0001_brown_viper",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768476044147,
+      "tag": "0002_thin_wendell_vaughn",
+      "breakpoints": true
     }
   ]
 }
