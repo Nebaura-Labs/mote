@@ -66,13 +66,29 @@ function DrawerLayout() {
       <Drawer.Screen
         name="index"
         options={{
-          headerTitle: "Mote",
+          headerTitle: "Chat",
           drawerLabel: ({ color, focused }) => (
             <Text style={{ color: focused ? color : '#111827' }}>Home</Text>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
-              name="home-outline"
+              name="chatbubble-outline"
+              size={size}
+              color={focused ? color : '#111827'}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="connection"
+        options={{
+          headerTitle: "Connection",
+          drawerLabel: ({ color, focused }) => (
+            <Text style={{ color: focused ? color : '#111827' }}>Connection</Text>
+          ),
+          drawerIcon: ({ size, color, focused }) => (
+            <Ionicons
+              name="git-network-outline"
               size={size}
               color={focused ? color : '#111827'}
             />

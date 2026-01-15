@@ -149,10 +149,12 @@
         "dotenv": "catalog:",
         "drizzle-orm": "^0.45.1",
         "ssh2": "^1.17.0",
+        "ws": "^8.19.0",
         "zod": "catalog:",
       },
       "devDependencies": {
         "@mote/config": "workspace:*",
+        "@types/ws": "^8.18.1",
         "typescript": "catalog:",
       },
     },

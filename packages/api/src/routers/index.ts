@@ -2,6 +2,8 @@ import type { RouterClient } from "@orpc/server";
 
 import { protectedProcedure, publicProcedure } from "../index";
 import { gatewayRouter } from "./gateway";
+import { clawdRouter } from "./clawd";
+import { autoSetupClawdRouter } from "./auto-setup-clawd";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -14,6 +16,8 @@ export const appRouter = {
     };
   }),
   gateway: gatewayRouter,
+  clawd: clawdRouter,
+  autoSetupClawd: autoSetupClawdRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

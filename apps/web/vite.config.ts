@@ -17,4 +17,7 @@ export default defineConfig({
   server: {
     port: 3001,
   },
+  optimizeDeps: {
+    exclude: ['ssh2', 'cpu-features'],
+  },
 });
