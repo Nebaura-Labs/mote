@@ -1,0 +1,9 @@
+{
+  "platforms": ["ios", "android"],
+  "ios": {
+    "modules": ["ShellExecutorModule"]
+  },
+  "android": {
+    "modules": ["ShellExecutorModule"]
+  }
+}
