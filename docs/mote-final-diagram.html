@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mote Wiring Diagram - FINAL</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+        }
+        h1 { color: #00d4ff; text-align: center; }
+        h2 { color: #ff6b6b; margin-top: 30px; }
+        h3 { color: #4ecdc4; margin-top: 20px; }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a4e;
+            border-radius: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+        .wiring-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .wiring-table th, .wiring-table td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+        }
+        .wiring-table th {
+            background: #2a2a4e;
+            color: #00d4ff;
+        }
+        .wiring-table tr:nth-child(even) {
+            background: #1a1a3e;
+        }
+        .component-box {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .esp32-box { background: #00aa00; color: white; }
+        .mic-box { background: #ff00ff; color: white; }
+        .amp-box { background: #ff8800; color: white; }
+        .charger-box { background: #0088ff; color: white; }
+        .display-box { background: #e91e63; color: white; }
+        .note {
+            background: #2a2a4e;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #00d4ff;
+            margin: 15px 0;
+        }
+        .warning {
+            background: #4a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ff4444;
+            margin: 15px 0;
+        }
+        .pinout-table {
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        .pinout-table td, .pinout-table th {
+            padding: 5px 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Mote Wiring Diagram - FINAL BUILD</h1>
+    
+    <div class="note">
+        <strong>Breadboard Orientation:</strong> 63 columns, Column 1 on RIGHT (USB side), Column 63 on LEFT.<br>
+        Top half: rows a-e | Bottom half: rows f-j | Center gap between e and f
+    </div>
+
+    <h2>📦 Components</h2>
+    
+    <p>
+        <span class="component-box esp32-box">ESP32-S3-WROOM</span>
+        <span class="component-box mic-box">INMP441 Mic</span>
+        <span class="component-box amp-box">MAX98357A Amp (3W)</span>
+        <span class="component-box charger-box">TP4056 Charger</span>
+        <span class="component-box display-box">ST7789 Display (240x320)</span>
+    </p>
+
+    <h2>📍 Component Placement</h2>
+    
+    <table class="wiring-table">
+        <tr>
+            <th>Component</th>
+            <th>Rows</th>
+            <th>Columns</th>
+            <th>Notes</th>
+        </tr>
+        <tr>
+            <td><strong>ESP32-S3</strong></td>
+            <td>b & i</td>
+            <td>1-22</td>
+            <td>USB port on RIGHT (column 1 side)</td>
+        </tr>
+        <tr>
+            <td><strong>INMP441 Mic</strong></td>
+            <td>e & f (straddles center gap)</td>
+            <td>35-37</td>
+            <td>Row e: L/R, WS, SCK | Row f: GND, VDD, SD</td>
+        </tr>
+        <tr>
+            <td><strong>MAX98357A Amp</strong></td>
+            <td>e</td>
+            <td>45-51</td>
+            <td>Pins in row e, screw terminal hangs over bottom half</td>
+        </tr>
+        <tr>
+            <td><strong>TP4056 Charger</strong></td>
+            <td>a</td>
+            <td>58-63</td>
+            <td>OUT+:58, B+:59, (gap 60-61), B-:62, OUT-:63. USB-C hangs off left edge</td>
+        </tr>
+        <tr>
+            <td><strong>100kΩ Resistors (x2)</strong></td>
+            <td>e</td>
+            <td>55-57</td>
+            <td>Voltage divider: R1(55-56), R2(56-57)</td>
+        </tr>
+        <tr>
+            <td><strong>ST7789 Display</strong></td>
+            <td>Connected via wires</td>
+            <td>Various</td>
+            <td>Uses ribbon cable with male-to-male adapters</td>
+        </tr>
+        <tr>
+            <td><strong>Speaker (3W)</strong></td>
+            <td>N/A</td>
+            <td>N/A</td>
+            <td>Soldered to amp screw terminal</td>
+        </tr>
+        <tr>
+            <td><strong>LiPo Battery (3.7V 2000mAh)</strong></td>
+            <td>N/A</td>
+            <td>59, 62</td>
+            <td>Red→d59 (B+), Black→c62 (B-)</td>
+        </tr>
+    </table>
+
+    <h2>🔌 ESP32-S3 Pinout</h2>
+    
+    <div class="note">
+        <strong>Orientation:</strong> USB port on RIGHT. Columns read 1→22 from right to left.
+    </div>
+
+    <h3>Row b (Top row of ESP32)</h3>
+    <table class="wiring-table pinout-table">
+        <tr>
+            <th>Col</th>
+            <td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td>
+        </tr>
+        <tr>
+            <th>GPIO</th>
+            <td>GND</td><td>GND</td><td>19</td><td>20</td><td>21</td><td>47</td><td>48</td><td>45</td><td>0</td><td>35</td><td>36</td><td>37</td><td>38</td><td>39</td><td>40</td><td>41</td><td>42</td><td>2</td><td>1</td><td>RX</td><td>TX</td><td>GND</td>
+        </tr>
+    </table>
+
+    <h3>Row i (Bottom row of ESP32)</h3>
+    <table class="wiring-table pinout-table">
+        <tr>
+            <th>Col</th>
+            <td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td>
+        </tr>
+        <tr>
+            <th>GPIO</th>
+            <td>GND</td><td>5V</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>46</td><td>3</td><td>8</td><td>12</td><td>17</td><td>16</td><td>15</td><td>7</td><td>6</td><td>5</td><td>4</td><td>RST</td><td>3V3</td><td>3V3</td>
+        </tr>
+    </table>
+
+    <h2>🔌 Complete Wiring List</h2>
+
+    <h3>Step 1: Power Rails</h3>
+    <table class="wiring-table">
+        <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Wire Color</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td>j21 (3V3)</td>
+            <td>Top + rail</td>
+            <td style="color: #ff4444;">🔴 Red</td>
+            <td>3.3V power for mic</td>
+        </tr>
+        <tr>
+            <td>a1 (GND)</td>
+            <td>Top - rail</td>
+            <td style="color: #888;">⚫ Black</td>
+            <td>Ground</td>
+        </tr>
+        <tr>
+            <td>j2 (5V)</td>
+            <td>Bottom + rail</td>
+            <td style="color: #ff4444;">🔴 Red</td>
+            <td>5V power for amp</td>
+        </tr>
+        <tr>
+            <td>j1 (GND)</td>
+            <td>Bottom - rail</td>
+            <td style="color: #888;">⚫ Black</td>
+            <td>Ground</td>
+        </tr>
+        <tr>
+            <td>Top - rail</td>
+            <td>Bottom - rail</td>
+            <td style="color: #888;">⚫ Black</td>
+            <td>Bridge grounds together</td>
+        </tr>
+    </table>
+
+    <h3>Step 2: INMP441 Microphone</h3>
+    <div class="note">
+        <strong>Mic Position:</strong> Straddles center gap at columns 35-37<br>
+        <strong>Row e:</strong> L/R (35), WS (36), SCK (37)<br>
+        <strong>Row f:</strong> GND (35), VDD (36), SD (37)<br>
+        <strong>Power:</strong> 3.3V (do NOT use 5V!)
+    </div>
+    <table class="wiring-table">
+        <tr>
+            <th>Mic Pin</th>
+            <th>Mic Location</th>
+            <th>Wire From</th>
+            <th>Wire To</th>
+            <th>Wire Color</th>
+            <th>ESP32 GPIO</th>
+        </tr>
+        <tr>
+            <td>L/R</td>
+            <td>e35</td>
+            <td>c35</td>
+            <td>Top - rail (GND)</td>
+            <td style="color: #888;">⚫ Black</td>
+            <td>N/A (selects left channel)</td>
+        </tr>
+        <tr>
+            <td>GND</td>
+            <td>f35</td>
+            <td>h35</td>
+            <td>Top - rail (GND)</td>
+            <td style="color: #888;">🔘 Grey</td>
+            <td>GND</td>
+        </tr>
+        <tr>
+            <td>VDD</td>
+            <td>f36</td>
+            <td>h36</td>
+            <td>Top + rail (3.3V)</td>
+            <td style="color: #ff4444;">🔴 Red</td>
+            <td>3.3V</td>
+        </tr>
+        <tr>
+            <td>WS</td>
+            <td>e36</td>
+            <td>c36</td>
+            <td>a10</td>
+            <td style="color: #ffff00;">🟡 Yellow</td>
+            <td>GPIO 35</td>
+        </tr>
+        <tr>
+            <td>SCK</td>
+            <td>e37</td>
+            <td>c37</td>
+            <td>a11</td>
+            <td style="color: #00ff00;">🟢 Green</td>
+            <td>GPIO 36</td>
+        </tr>
+        <tr>
+            <td>SD</td>
+            <td>f37</td>
+            <td>h37</td>
+            <td>a12</td>
+            <td style="color: #4488ff;">🔵 Blue</td>
+            <td>GPIO 37</td>
+        </tr>
+    </table>
+
+    <h3>Step 3: MAX98357A Amplifier</h3>
+    <div class="note">
+        <strong>Amp Position:</strong> Row e, columns 45-51<br>
+        <strong>Pins (left to right):</strong> LRC(45), BCLK(46), DIN(47), GAIN(48), SD(49), GND(50), VIN(51)<br>
+        <strong>Power:</strong> 5V<br>
+        <strong>Output:</strong> 3W max
+    </div>
+    <table class="wiring-table">
+        <tr>
+            <th>Amp Pin</th>
+            <th>Amp Location</th>
+            <th>Wire From</th>
+            <th>Wire To</th>
+            <th>Wire Color</th>
+            <th>ESP32 GPIO</th>
+        </tr>
+        <tr>
+            <td>VIN</td>
+            <td>e51</td>
+            <td>c51</td>
+            <td>Bottom + rail (5V)</td>
+            <td style="color: #ff4444;">🔴 Red</td>
+            <td>5V</td>
+        </tr>
+        <tr>
+            <td>GND</td>
+            <td>e50</td>
+            <td>c50</td>
+            <td>Bottom - rail (GND)</td>
+            <td style="color: #888;">🔘 Grey</td>
+            <td>GND</td>
+        </tr>
+        <tr>
+            <td>BCLK</td>
+            <td>e46</td>
+            <td>c46</td>
+            <td>j14</td>
+            <td style="color: #ff8800;">🟠 Orange</td>
+            <td>GPIO 16</td>
+        </tr>
+        <tr>
+            <td>LRC</td>
+            <td>e45</td>
+            <td>c45</td>
+            <td>j13</td>
+            <td style="color: #aa44ff;">🟣 Purple</td>
+            <td>GPIO 17</td>
+        </tr>
+        <tr>
+            <td>DIN</td>
+            <td>e47</td>
+            <td>c47</td>
+            <td>j12</td>
+            <td style="color: #ffffff;">⚪ White</td>
+            <td>GPIO 18</td>
+        </tr>
+        <tr>
+            <td>GAIN</td>
+            <td>e48</td>
+            <td colspan="4">Not connected (default 9dB gain)</td>
+        </tr>
+        <tr>
+            <td>SD</td>
+            <td>e49</td>
+            <td colspan="4">Not connected (amp always on)</td>
+        </tr>
+    </table>
+
+    <h3>Step 4: Speaker</h3>
+    <table class="wiring-table">
+        <tr>
+            <th>Speaker</th>
+            <th>Connects To</th>
+            <th>Notes</th>
+        </tr>
+        <tr>
+            <td>+ (positive)</td>
+            <td>Amp screw terminal + (right)</td>
+            <td>Soldered male pin to speaker pad, plugged into screw terminal</td>
+        </tr>
+        <tr>
+            <td>- (negative)</td>
+            <td>Amp screw terminal - (left)</td>
+            <td>Soldered male pin to speaker pad, plugged into screw terminal</td>
+        </tr>
+    </table>
+
+    <h3>Step 5: TP4056 Charger Module</h3>
+    <div class="note">
+        <strong>Charger Position:</strong> Row a, columns 58-63 (USB-C hangs off left edge)<br>
+        <strong>Pin Layout:</strong> OUT+(58), B+(59), gap(60-61), B-(62), OUT-(63)<br>
+        <strong>Input:</strong> 5V via USB-C<br>
+        <strong>Output:</strong> 4.2V max (LiPo charging voltage)
+    </div>
+    <table class="wiring-table">
+        <tr>
+            <th>TP4056 Pin</th>
+            <th>Location</th>
+            <th>Wire From</th>
+            <th>Wire To</th>
+            <th>Wire Color</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td>OUT+</td>
+            <td>a58</td>
+            <td>c58</td>
+            <td>Bottom + rail (5V)</td>
+            <td style="color: #00ff00;">🟢 Green</td>
+            <td>Power output to system</td>
+        </tr>
+        <tr>
+            <td>OUT-</td>
+            <td>a63</td>
+            <td>c63</td>
+            <td>Bottom - rail (GND)</td>
+            <td style="color: #888;">🔘 Grey</td>
+            <td>Ground output</td>
+        </tr>
+        <tr>
+            <td>B+</td>
+            <td>a59</td>
+            <td>d59</td>
+            <td>Battery + (red wire)</td>
+            <td>Battery Red</td>
+            <td>Battery positive</td>
+        </tr>
+        <tr>
+            <td>B-</td>
+            <td>a62</td>
+            <td>c62</td>
+            <td>Battery - (black wire)</td>
+            <td>Battery Black</td>
+            <td>Battery negative</td>
+        </tr>
+    </table>
+
+    <h3>Step 6: Battery Voltage Divider (Resistors)</h3>
+    <div class="note">
+        <strong>Purpose:</strong> Divide battery voltage (4.2V max) to safe level for ESP32 ADC (3.3V max)<br>
+        <strong>Resistors:</strong> Two 100kΩ in series<br>
+        <strong>Output:</strong> ~2.1V at full charge (4.2V ÷ 2)
+    </div>
+    <table class="wiring-table">
+        <tr>
+            <th>Component</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Wire Color</th>
+        </tr>
+        <tr>
+            <td>Wire from B+</td>
+            <td>c59 (B+ column)</td>
+            <td>c55 (resistor start)</td>
+            <td style="color: #4488ff;">🔵 Blue</td>
+        </tr>
+        <tr>
+            <td>Resistor 1 (100kΩ)</td>
+            <td>e55</td>
+            <td>e56</td>
+            <td>N/A (component)</td>
+        </tr>
+        <tr>
+            <td>Resistor 2 (100kΩ)</td>
+            <td>d56</td>
+            <td>d57</td>
+            <td>N/A (component)</td>
+        </tr>
+        <tr>
+            <td>Wire to GND</td>
+            <td>c57</td>
+            <td>Top - rail (GND)</td>
+            <td style="color: #888;">🔘 Grey</td>
+        </tr>
+        <tr>
+            <td>Wire to ADC</td>
+            <td>c56 (junction)</td>
+            <td>a17 (GPIO 2)</td>
+            <td style="color: #aa44ff;">🟣 Purple</td>
+        </tr>
+    </table>
+
+    <h3>Step 7: ST7789 Display (240x320)</h3>
+    <div class="note">
+        <strong>Connection:</strong> Via ribbon cable with male-to-male adapters<br>
+        <strong>Power:</strong> 3.3V<br>
+        <strong>Interface:</strong> SPI
+    </div>
+    <table class="wiring-table">
+        <tr>
+            <th>Display Pin</th>
+            <th>Wire To</th>
+            <th>Wire Color</th>
+            <th>ESP32 GPIO</th>
+        </tr>
+        <tr>
+            <td>VCC</td>
+            <td>j22 (3V3)</td>
+            <td style="color: #aa44ff;">🟣 Purple</td>
+            <td>3.3V</td>
+        </tr>
+        <tr>
+            <td>GND</td>
+            <td>Bottom - rail (col 30)</td>
+            <td style="color: #ffffff;">⚪ White</td>
+            <td>GND</td>
+        </tr>
+        <tr>
+            <td>DIN (MOSI)</td>
+            <td>j6</td>
+            <td style="color: #00ff00;">🟢 Green</td>
+            <td>GPIO 11</td>
+        </tr>
+        <tr>
+            <td>CLK (SCK)</td>
+            <td>j4</td>
+            <td style="color: #ff8800;">🟠 Orange</td>
+            <td>GPIO 13</td>
+        </tr>
+        <tr>
+            <td>CS</td>
+            <td>j7</td>
+            <td style="color: #ffff00;">🟡 Yellow</td>
+            <td>GPIO 10</td>
+        </tr>
+        <tr>
+            <td>DC</td>
+            <td>j8</td>
+            <td style="color: #4488ff;">🔵 Blue</td>
+            <td>GPIO 9</td>
+        </tr>
+        <tr>
+            <td>RST</td>
+            <td>j3</td>
+            <td style="color: #8b6914;">🟤 Brown/Olive</td>
+            <td>GPIO 14</td>
+        </tr>
+        <tr>
+            <td>BL (Backlight)</td>
+            <td>j11</td>
+            <td style="color: #ffffff;">⚪ White</td>
+            <td>GPIO 8</td>
+        </tr>
+    </table>
+
+    <h3>Step 8: LiPo Battery</h3>
+    <table class="wiring-table">
+        <tr>
+            <th>Battery Wire</th>
+            <th>Connects To</th>
+            <th>Notes</th>
+        </tr>
+        <tr>
+            <td>Red (+)</td>
+            <td>d59 (TP4056 B+ column)</td>
+            <td>Male pin inserted into JST connector, plugged into breadboard</td>
+        </tr>
+        <tr>
+            <td>Black (-)</td>
+            <td>c62 (TP4056 B- column)</td>
+            <td>Male pin inserted into JST connector, plugged into breadboard</td>
+        </tr>
+    </table>
+
+    <h2>⚡ Power Summary</h2>
+    <table class="wiring-table">
+        <tr>
+            <th>Rail/Source</th>
+            <th>Voltage</th>
+            <th>Components Powered</th>
+        </tr>
+        <tr>
+            <td>Top + rail</td>
+            <td>3.3V</td>
+            <td>Microphone (INMP441), Display (ST7789)</td>
+        </tr>
+        <tr>
+            <td>Top - rail</td>
+            <td>GND</td>
+            <td>All grounds (connected to bottom - rail)</td>
+        </tr>
+        <tr>
+            <td>Bottom + rail</td>
+            <td>5V</td>
+            <td>Amplifier (MAX98357A), TP4056 OUT+</td>
+        </tr>
+        <tr>
+            <td>Bottom - rail</td>
+            <td>GND</td>
+            <td>All grounds</td>
+        </tr>
+        <tr>
+            <td>LiPo Battery</td>
+            <td>3.7V (nominal), 4.2V (full)</td>
+            <td>Via TP4056 to power system</td>
+        </tr>
+    </table>
+
+    <h2>🎯 GPIO Pin Summary</h2>
+    <table class="wiring-table">
+        <tr>
+            <th>Function</th>
+            <th>GPIO</th>
+            <th>Column</th>
+            <th>Row</th>
+        </tr>
+        <tr>
+            <th colspan="4" style="background: #ff00ff33;">Microphone (I2S Input)</th>
+        </tr>
+        <tr>
+            <td>Mic WS (Word Select)</td>
+            <td>GPIO 35</td>
+            <td>10</td>
+            <td>a/b</td>
+        </tr>
+        <tr>
+            <td>Mic SCK (Clock)</td>
+            <td>GPIO 36</td>
+            <td>11</td>
+            <td>a/b</td>
+        </tr>
+        <tr>
+            <td>Mic SD (Data)</td>
+            <td>GPIO 37</td>
+            <td>12</td>
+            <td>a/b</td>
+        </tr>
+        <tr>
+            <th colspan="4" style="background: #ff880033;">Amplifier (I2S Output)</th>
+        </tr>
+        <tr>
+            <td>Amp BCLK (Bit Clock)</td>
+            <td>GPIO 16</td>
+            <td>14</td>
+            <td>i/j</td>
+        </tr>
+        <tr>
+            <td>Amp LRC (L/R Clock)</td>
+            <td>GPIO 17</td>
+            <td>13</td>
+            <td>i/j</td>
+        </tr>
+        <tr>
+            <td>Amp DIN (Data In)</td>
+            <td>GPIO 18</td>
+            <td>12</td>
+            <td>i/j</td>
+        </tr>
+        <tr>
+            <th colspan="4" style="background: #e91e6333;">Display (SPI)</th>
+        </tr>
+        <tr>
+            <td>Display MOSI (DIN)</td>
+            <td>GPIO 11</td>
+            <td>6</td>
+            <td>i/j</td>
+        </tr>
+        <tr>
+            <td>Display SCK (CLK)</td>
+            <td>GPIO 13</td>
+            <td>4</td>
+            <td>i/j</td>
+        </tr>
+        <tr>
+            <td>Display CS</td>
+            <td>GPIO 10</td>
+            <td>7</td>
+            <td>i/j</td>
+        </tr>
+        <tr>
+            <td>Display DC</td>
+            <td>GPIO 9</td>
+            <td>8</td>
+            <td>i/j</td>
+        </tr>
+        <tr>
+            <td>Display RST</td>
+            <td>GPIO 14</td>
+            <td>3</td>
+            <td>i/j</td>
+        </tr>
+        <tr>
+            <td>Display BL (Backlight)</td>
+            <td>GPIO 8</td>
+            <td>11</td>
+            <td>i/j</td>
+        </tr>
+        <tr>
+            <th colspan="4" style="background: #0088ff33;">Battery Monitoring (ADC)</th>
+        </tr>
+        <tr>
+            <td>Battery Voltage (via divider)</td>
+            <td>GPIO 2</td>
+            <td>17</td>
+            <td>a/b</td>
+        </tr>
+    </table>
+
+    <h2>⚠️ Important Notes</h2>
+    
+    <div class="warning">
+        <strong>Microphone Power:</strong> INMP441 uses 3.3V ONLY. Connecting to 5V will damage it!
+    </div>
+    
+    <div class="warning">
+        <strong>Battery Safety:</strong> Never short the battery terminals. Always double-check polarity before connecting.
+    </div>
+    
+    <div class="note">
+        <strong>Voltage Divider Math:</strong><br>
+        V_out = V_in × (R2 / (R1 + R2))<br>
+        V_out = 4.2V × (100kΩ / 200kΩ) = 2.1V (safe for 3.3V ADC)
+    </div>
+
+    <h2>🔧 Wire Color Legend</h2>
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ff0000;"></div>
+            <span>Red - Power (3.3V or 5V)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #000000;"></div>
+            <span>Black - Ground</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #888888;"></div>
+            <span>Grey - Ground (alternate)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ffff00;"></div>
+            <span>Yellow - Signal</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #00ff00;"></div>
+            <span>Green - Signal</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #0088ff;"></div>
+            <span>Blue - Signal</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ff8800;"></div>
+            <span>Orange - Signal</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #aa00ff;"></div>
+            <span>Purple - Signal</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ffffff; border: 2px solid #888;"></div>
+            <span>White - Signal</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #8b6914;"></div>
+            <span>Brown/Olive - Signal</span>
+        </div>
+    </div>
+
+    <p style="text-align: center; margin-top: 40px; color: #666;">
+        Mote Project - Nebaura | Built with ♥
+    </p>
+</body>
+</html>
