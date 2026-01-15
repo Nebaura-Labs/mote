@@ -140,7 +140,7 @@ export default function OnboardingScreen() {
             style={[styles.formContainer, { paddingBottom: insets.bottom + 20 }]}
           >
             <View style={styles.formFields}>
-              {isSignUp && (
+              <View style={[styles.nameFieldContainer, !isSignUp && styles.nameFieldHidden]}>
                 <TextField isInvalid={!!errors.name} className="mb-4">
                   <TextField.Label className="font-medium mb-1" style={{ color: "#6B7280" }}>Name</TextField.Label>
                   <TextField.Input
@@ -154,12 +154,12 @@ export default function OnboardingScreen() {
                     autoComplete="name"
                     returnKeyType="next"
                     onSubmitEditing={() => emailInputRef.current?.focus()}
-                    editable={!isSubmitting}
+                    editable={!isSubmitting && isSignUp}
                     className="bg-white border border-gray-200 rounded-xl px-4 h-14 text-gray-900"
                   />
                   {errors.name && <TextField.ErrorMessage className="text-red-600 text-sm mt-1">{errors.name}</TextField.ErrorMessage>}
                 </TextField>
-              )}
+              </View>
 
               <TextField isInvalid={!!errors.email} className="mb-4">
                 <TextField.Label className="font-medium mb-1" style={{ color: "#6B7280" }}>Email</TextField.Label>
@@ -276,6 +276,12 @@ const styles = StyleSheet.create({
   toggleLink: {
     color: "#04BDFF",
     fontWeight: "600",
-    textDecorationLine: "underline",
+  },
+  nameFieldContainer: {
+    height: 90,
+  },
+  nameFieldHidden: {
+    opacity: 0,
+    pointerEvents: "none",
   },
 });

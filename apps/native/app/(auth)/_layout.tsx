@@ -1,17 +1,20 @@
 import { LoadingScreen } from "@/components/loading-screen";
 import { useAuth } from "@/contexts/auth-context";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useRootNavigationState } from "expo-router";
 import { useEffect } from "react";
 
 export default function AuthLayout() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const navigationState = useRootNavigationState();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.replace("/(drawer)/(tabs)");
+    if (!navigationState?.key || isLoading) return;
+
+    if (isAuthenticated) {
+      router.replace("/(drawer)");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, navigationState?.key]);
 
   if (isLoading) {
     return <LoadingScreen />;

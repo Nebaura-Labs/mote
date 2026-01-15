@@ -19,6 +19,8 @@
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
     "dotenv": "catalog:",
+    "drizzle-orm": "^0.45.1",
+    "ssh2": "^1.17.0",
     "zod": "catalog:"
   },
   "devDependencies": {

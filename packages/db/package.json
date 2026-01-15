@@ -1,9 +1,11 @@
 {
   "name": "@mote/db",
-  "type": "module",
   "exports": {
     ".": {
       "default": "./src/index.ts"
+    },
+    "./encryption": {
+      "default": "./src/encryption.ts"
     },
     "./*": {
       "default": "./src/*.ts"

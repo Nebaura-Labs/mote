@@ -12,7 +12,7 @@ export const auth = betterAuth({
 
     schema: schema,
   }),
-  trustedOrigins: [env.CORS_ORIGIN, "mybettertapp://", "exp://"],
+  trustedOrigins: [env.CORS_ORIGIN, "mybettertapp://", "mote://", "exp://"],
   emailAndPassword: {
     enabled: true,
   },

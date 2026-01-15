@@ -1,3 +1,4 @@
+import "react-native-get-random-values"; // Must be first for crypto.getRandomValues polyfill
 import "@/global.css";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
@@ -7,6 +8,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { AppThemeProvider } from "@/contexts/app-theme-context";
 import { AuthProvider } from "@/contexts/auth-context";
+import { BridgeProvider } from "@/contexts/BridgeContext";
 import { queryClient } from "@/utils/orpc";
 
 function StackLayout() {
@@ -27,7 +29,9 @@ export default function Layout() {
           <AppThemeProvider>
             <HeroUINativeProvider>
               <AuthProvider>
-                <StackLayout />
+                <BridgeProvider autoReconnect={true}>
+                  <StackLayout />
+                </BridgeProvider>
               </AuthProvider>
             </HeroUINativeProvider>
           </AppThemeProvider>
