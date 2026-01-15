@@ -16,7 +16,9 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { v4 as uuidv4 } from 'uuid';
-import { Button, TextField, Card } from 'heroui-native';
+import { Button, TextField } from 'heroui-native';
+import Markdown from 'react-native-markdown-display';
+import { CaretDown, ArrowClockwise, Paperclip, ArrowUp } from 'phosphor-react-native';
 import { ScreenWrapper } from '@/components/ui/screen-wrapper';
 import { Text } from '@/components/ui/text';
 import { useAuth } from '@/contexts/auth-context';
@@ -28,6 +30,7 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     flex: 1,
+    backgroundColor: '#f0efea',
   },
   messagesContent: {
     padding: 16,
@@ -35,25 +38,211 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     padding: 16,
-    paddingTop: 8,
+    paddingTop: 12,
     backgroundColor: '#f0efea',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+  },
+  inputCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  inputControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  controlsLeft: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  controlsRight: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  sessionSelector: {
+    color: '#007AFF',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  offToggle: {
+    color: '#007AFF',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  iconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textInput: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#111827',
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  statusBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  statusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusDotActive: {
+    backgroundColor: '#EAB308',
+  },
+  statusDotReady: {
+    backgroundColor: '#10B981',
+  },
+  statusText: {
+    color: '#6B7280',
+    fontSize: 13,
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   messageCard: {
-    marginBottom: 12,
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
   userMessage: {
     alignSelf: 'flex-end',
-    maxWidth: '80%',
-    backgroundColor: '#3b82f6',
+    maxWidth: '75%',
   },
   assistantMessage: {
     alignSelf: 'flex-start',
-    maxWidth: '80%',
+    maxWidth: '75%',
+  },
+  userBubble: {
+    backgroundColor: '#007AFF',
+    borderRadius: 20,
+    borderBottomRightRadius: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  assistantBubble: {
     backgroundColor: '#ffffff',
+    borderRadius: 20,
+    borderBottomLeftRadius: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  userText: {
+    color: '#ffffff',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  assistantText: {
+    color: '#1f2937',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  thinkingBubble: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    borderBottomLeftRadius: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
 });
+
+const markdownStyles = {
+  body: {
+    color: '#1f2937',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  paragraph: {
+    marginTop: 0,
+    marginBottom: 8,
+  },
+  strong: {
+    fontWeight: 'bold' as const,
+  },
+  em: {
+    fontStyle: 'italic' as const,
+  },
+  link: {
+    color: '#007AFF',
+  },
+  code_inline: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    fontFamily: 'monospace',
+    fontSize: 14,
+  },
+  code_block: {
+    backgroundColor: '#f3f4f6',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 4,
+    fontFamily: 'monospace',
+    fontSize: 14,
+  },
+  fence: {
+    backgroundColor: '#f3f4f6',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 4,
+    fontFamily: 'monospace',
+    fontSize: 14,
+  },
+  bullet_list: {
+    marginBottom: 8,
+  },
+  ordered_list: {
+    marginBottom: 8,
+  },
+  list_item: {
+    marginBottom: 4,
+  },
+};
 
 interface Message {
   id: string;
@@ -146,6 +335,13 @@ export default function Home() {
   }, [messages]);
 
   /**
+   * Navigate to gateway setup
+   */
+  const handleConfigure = () => {
+    router.push('/gateway-setup');
+  };
+
+  /**
    * Handle sending a message
    */
   const handleSendMessage = async () => {
@@ -199,37 +395,10 @@ export default function Home() {
     }
   };
 
-  /**
-   * Handle configuring clawd.bot
-   */
-  const handleConfigure = () => {
-    router.push('/clawd-setup');
-  };
-
-  /**
-   * Handle starting new conversation
-   */
-  const handleNewConversation = () => {
-    Alert.alert(
-      'New Conversation',
-      'Start a new conversation? This will clear the current chat.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Start New',
-          style: 'destructive',
-          onPress: () => {
-            setMessages([]);
-            setSessionKey(uuidv4());
-          },
-        },
-      ]
-    );
-  };
 
   if (isLoading) {
     return (
-      <ScreenWrapper>
+      <ScreenWrapper style={{ backgroundColor: '#f0efea' }}>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#3b82f6" />
           <Text variant="p" className="mt-4" style={{ color: '#6B7280' }}>
@@ -242,7 +411,7 @@ export default function Home() {
 
   if (!hasConfig) {
     return (
-      <ScreenWrapper>
+      <ScreenWrapper style={{ backgroundColor: '#f0efea' }}>
         <View className="flex-1 items-center justify-center p-6">
           <Text variant="h2" className="text-center mb-4" style={{ color: '#111827' }}>
             Welcome to Mote
@@ -252,9 +421,8 @@ export default function Home() {
           </Text>
           <Button
             onPress={handleConfigure}
-            color="primary"
             size="lg"
-            className="w-full max-w-xs"
+            className="w-full max-w-xs bg-blue-500"
           >
             Configure Gateway
           </Button>
@@ -264,7 +432,7 @@ export default function Home() {
   }
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper style={{ backgroundColor: '#f0efea' }}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -278,12 +446,34 @@ export default function Home() {
           showsVerticalScrollIndicator={false}
         >
           {messages.length === 0 && !isSending && (
-            <View className="flex-1 items-center justify-center py-12">
-              <Text variant="large" className="text-center mb-2" style={{ color: '#111827' }}>
+            <View className="flex-1 items-center justify-center py-20">
+              <View style={{
+                backgroundColor: '#f3f4f6',
+                borderRadius: 60,
+                width: 100,
+                height: 100,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 20,
+              }}>
+                <Text style={{ fontSize: 48 }}>💬</Text>
+              </View>
+              <Text style={{
+                fontSize: 24,
+                fontWeight: '600',
+                color: '#111827',
+                marginBottom: 8,
+                textAlign: 'center',
+              }}>
                 Start a conversation
               </Text>
-              <Text variant="p" className="text-center" style={{ color: '#6B7280' }}>
-                Ask me anything!
+              <Text style={{
+                fontSize: 16,
+                color: '#6b7280',
+                textAlign: 'center',
+                paddingHorizontal: 32,
+              }}>
+                Ask me anything! I'm here to help.
               </Text>
             </View>
           )}
@@ -296,92 +486,96 @@ export default function Home() {
                 message.role === 'user' ? styles.userMessage : styles.assistantMessage,
               ]}
             >
-              <Card
-                className={`${
-                  message.role === 'user'
-                    ? 'bg-blue-500'
-                    : 'bg-white border border-gray-200'
-                } rounded-2xl`}
+              <View
+                style={
+                  message.role === 'user' ? styles.userBubble : styles.assistantBubble
+                }
               >
-                <Card.Body className="p-3">
-                  <Text
-                    variant="p"
-                    style={{
-                      color: message.role === 'user' ? '#ffffff' : '#111827',
-                      lineHeight: 20,
-                    }}
-                  >
+                {message.role === 'user' ? (
+                  <Text style={styles.userText}>
                     {message.content}
                   </Text>
-                </Card.Body>
-              </Card>
+                ) : (
+                  <Markdown style={markdownStyles}>
+                    {message.content}
+                  </Markdown>
+                )}
+              </View>
             </View>
           ))}
 
           {isSending && (
             <View style={[styles.messageCard, styles.assistantMessage]}>
-              <Card className="bg-white border border-gray-200 rounded-2xl">
-                <Card.Body className="p-3 flex-row items-center gap-2">
-                  <ActivityIndicator size="small" color="#3b82f6" />
-                  <Text variant="p" style={{ color: '#6B7280' }}>
-                    Thinking...
-                  </Text>
-                </Card.Body>
-              </Card>
+              <View style={styles.thinkingBubble}>
+                <ActivityIndicator size="small" color="#6b7280" />
+                <Text style={{ color: '#6b7280', fontSize: 15 }}>
+                  Thinking...
+                </Text>
+              </View>
             </View>
           )}
         </ScrollView>
 
-        {/* Input Area */}
+        {/* Input Area - Clawd Style */}
         <View style={styles.inputContainer}>
-          <View className="flex-row items-end gap-2">
-            <View className="flex-1">
-              <TextField>
-                <TextField.Input
-                  value={inputText}
-                  onChangeText={setInputText}
-                  placeholder="Type a message..."
-                  multiline
-                  numberOfLines={3}
-                  maxLength={2000}
-                  onSubmitEditing={handleSendMessage}
-                  editable={!isSending}
-                  className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900"
-                  style={{ textAlignVertical: 'top' }}
-                />
-              </TextField>
+          <View style={styles.inputCard}>
+            {/* Top Controls */}
+            <View style={styles.inputControls}>
+              <View style={styles.controlsLeft}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={styles.sessionSelector}>main</Text>
+                  <CaretDown size={14} color="#007AFF" weight="bold" />
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={styles.offToggle}>Off</Text>
+                  <CaretDown size={14} color="#007AFF" weight="bold" />
+                </View>
+              </View>
+              <View style={styles.controlsRight}>
+                <View style={styles.iconButton}>
+                  <ArrowClockwise size={18} color="#6B7280" weight="bold" />
+                </View>
+                <View style={styles.iconButton}>
+                  <Paperclip size={18} color="#6B7280" weight="bold" />
+                </View>
+              </View>
             </View>
-            <Button
-              onPress={handleSendMessage}
-              isDisabled={!inputText.trim() || isSending}
-              variant="solid"
-              size="md"
-              className="self-end mb-1"
-            >
-              {isSending ? 'Sending...' : 'Send'}
-            </Button>
-          </View>
 
-          {/* Action Buttons */}
-          <View className="flex-row gap-2 mt-2">
-            <Button
-              onPress={handleNewConversation}
-              variant="ghost"
-              size="sm"
-              isDisabled={messages.length === 0 || isSending}
-              className="flex-1"
-            >
-              New Chat
-            </Button>
-            <Button
-              onPress={handleConfigure}
-              variant="ghost"
-              size="sm"
-              isDisabled={isSending}
-              className="flex-1"
-            >
-              Settings
-            </Button>
+            {/* Text Input */}
+            <TextField>
+              <TextField.Input
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder="Message Clawd..."
+                placeholderTextColor="#9CA3AF"
+                multiline
+                numberOfLines={3}
+                maxLength={2000}
+                onSubmitEditing={handleSendMessage}
+                editable={!isSending}
+                style={styles.textInput}
+              />
+            </TextField>
+
+            {/* Bottom Status Bar */}
+            <View style={styles.statusBar}>
+              <View style={styles.statusLeft}>
+                <View style={[styles.statusDot, isSending ? styles.statusDotActive : styles.statusDotReady]} />
+                <Text style={styles.statusText}>
+                  main {isSending ? 'Sending...' : 'Ready'}
+                </Text>
+              </View>
+
+              {/* Send Button */}
+              <Button
+                onPress={handleSendMessage}
+                isDisabled={!inputText.trim() || isSending}
+                isIconOnly
+                style={styles.sendButton}
+              >
+                <ArrowUp size={20} color="#ffffff" weight="bold" />
+              </Button>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>

@@ -47,6 +47,8 @@ export class GatewayClient {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
+  private pingInterval: NodeJS.Timeout | null = null;
+  private pongReceived = true;
 
   constructor(userId: string, token: string, gatewayUrl: string) {
     this.userId = userId;
@@ -88,6 +90,7 @@ export class GatewayClient {
           this.isConnected = true;
           this.reconnectAttempts = 0;
           this.setupMessageHandler();
+          this.startKeepalive();
           resolve();
         } catch (error) {
           reject(error);
@@ -156,6 +159,7 @@ export class GatewayClient {
                 this.isConnected = true;
                 this.reconnectAttempts = 0;
                 this.setupMessageHandler();
+                this.startKeepalive();
                 resolve();
               } catch (error) {
                 reject(error);
@@ -275,6 +279,48 @@ export class GatewayClient {
         console.error(`[gateway-client] Failed to parse message for user ${this.userId}:`, error);
       }
     });
+
+    // Handle pong frames
+    this.ws?.on("pong", () => {
+      this.pongReceived = true;
+    });
+  }
+
+  /**
+   * Start keepalive pings to prevent connection timeout
+   */
+  private startKeepalive(): void {
+    // Stop any existing keepalive
+    this.stopKeepalive();
+
+    // Send ping every 30 seconds
+    this.pingInterval = setInterval(() => {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      // Check if pong was received for last ping
+      if (!this.pongReceived) {
+        console.warn(`[gateway-client] No pong received for user ${this.userId}, connection may be dead`);
+        this.stopKeepalive();
+        this.ws?.terminate();
+        return;
+      }
+
+      // Send ping
+      this.pongReceived = false;
+      this.ws.ping();
+    }, 30000);
+  }
+
+  /**
+   * Stop keepalive pings
+   */
+  private stopKeepalive(): void {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
   }
 
   /**
@@ -368,23 +414,27 @@ export class GatewayClient {
               }
             }
           } else if (payload.state === "final") {
-            // Response complete - final event may contain the full text
-            let finalContent = responseContent;
+            // Response complete - use the final event's complete text
+            let finalContent = "";
 
-            // Check if final event has complete message content
+            // Extract complete text from final event
             if (payload.message?.content) {
               for (const item of payload.message.content) {
                 if (item.type === "text" && item.text) {
-                  // Use the final complete text if it's longer than accumulated deltas
-                  if (item.text.length > finalContent.length) {
-                    console.log(`[gateway-client] Using complete text from final event: ${item.text}`);
-                    finalContent = item.text;
-                  }
+                  finalContent = item.text;
+                  console.log(`[gateway-client] Using complete text from final event (${finalContent.length} chars)`);
+                  break; // Use first text item
                 }
               }
             }
 
-            console.log(`[gateway-client] Chat response completed, content: ${finalContent}`);
+            // Fallback to accumulated deltas if final event has no text
+            if (!finalContent && responseContent) {
+              console.log(`[gateway-client] No text in final event, using accumulated deltas`);
+              finalContent = responseContent;
+            }
+
+            console.log(`[gateway-client] Chat response completed, content: ${finalContent.substring(0, 100)}...`);
             isComplete = true;
             cleanup();
             clearTimeout(timeout);
@@ -472,11 +522,19 @@ export class GatewayClient {
   }
 
   /**
+   * Check if connected
+   */
+  isClientConnected(): boolean {
+    return this.isConnected && this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+  }
+
+  /**
    * Disconnect from Gateway
    */
   disconnect(): void {
     console.log(`[gateway-client] Disconnecting for user ${this.userId}`);
     this.isConnected = false;
+    this.stopKeepalive();
     this.ws?.close();
     this.sshClient?.end();
   }
@@ -505,7 +563,7 @@ export class GatewayClient {
    * Generate unique ID for requests
    */
   private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }
 }
 
@@ -518,10 +576,24 @@ class GatewayClientPool {
   async getClient(userId: string, token: string, gatewayUrl: string): Promise<GatewayClient> {
     let client = this.clients.get(userId);
 
-    if (!client || !client["isConnected"]) {
+    // Check if client exists and is actually connected
+    if (!client || !client.isClientConnected()) {
+      console.log(`[gateway-client-pool] Creating new connection for user ${userId}`);
+
+      // Clean up old client if exists
+      if (client) {
+        try {
+          client.disconnect();
+        } catch (err) {
+          console.error(`[gateway-client-pool] Failed to disconnect old client:`, err);
+        }
+      }
+
       client = new GatewayClient(userId, token, gatewayUrl);
       this.clients.set(userId, client);
       await client.connect();
+    } else {
+      console.log(`[gateway-client-pool] Reusing existing connection for user ${userId}`);
     }
 
     return client;

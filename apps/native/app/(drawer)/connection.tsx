@@ -12,6 +12,7 @@ import { ScreenWrapper } from '@/components/ui/screen-wrapper';
 import { Text } from '@/components/ui/text';
 import { BridgeStatusCard } from '@/components/BridgeStatusIndicator';
 import { useBridge } from '@/contexts/BridgeContext';
+import { client } from '@/utils/orpc';
 import {
   getSSHConfig,
   getIdentityFilePath,
@@ -36,20 +37,23 @@ export default function Home() {
   const [hasIdentityFile, setHasIdentityFile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isTesting, setIsTesting] = useState(false);
+  const [clawdConfig, setClawdConfig] = useState<any>(null);
 
   /**
-   * Load SSH configuration
+   * Load SSH configuration and clawd config
    */
   const loadConfig = async () => {
     try {
       setIsLoading(true);
-      const [config, identityPath] = await Promise.all([
+      const [config, identityPath, clawd] = await Promise.all([
         getSSHConfig(),
         getIdentityFilePath(),
+        client.clawd.getConfig().catch(() => null),
       ]);
 
       setSSHConfig(config);
       setHasIdentityFile(!!identityPath);
+      setClawdConfig(clawd);
     } catch (error) {
       console.error('[Home] Failed to load config:', error);
     } finally {
@@ -121,6 +125,40 @@ export default function Home() {
             } catch (error) {
               console.error('[Home] Failed to clear config:', error);
               Alert.alert('Error', 'Failed to clear configuration');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  /**
+   * Handle configure clawd chat
+   */
+  const handleConfigureClawd = () => {
+    router.push('/clawd-setup');
+  };
+
+  /**
+   * Handle clear chat history
+   */
+  const handleClearHistory = () => {
+    Alert.alert(
+      'Clear Chat History',
+      'This will permanently delete all your chat messages. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await client.clawd.clearHistory();
+              Alert.alert('Success', 'Chat history cleared');
+              await loadConfig();
+            } catch (error) {
+              console.error('[Home] Failed to clear history:', error);
+              Alert.alert('Error', 'Failed to clear chat history');
             }
           },
         },
@@ -244,6 +282,70 @@ export default function Home() {
                     className="w-full"
                   >
                     Reconfigure Gateway
+                  </Button>
+                </View>
+              </Card.Body>
+            </Card>
+          )}
+
+          {/* Chat Configuration */}
+          {clawdConfig && (
+            <Card className="bg-white border border-gray-200 rounded-xl">
+              <Card.Body className="p-4">
+                <Text variant="h4" className="mb-4" style={{ color: '#111827' }}>
+                  Chat Configuration
+                </Text>
+
+                <View className="gap-3">
+                  {/* Gateway URL */}
+                  <View>
+                    <Text variant="small" style={{ color: '#6B7280' }}>
+                      Gateway URL
+                    </Text>
+                    <Text variant="p" style={{ color: '#111827' }}>
+                      {clawdConfig.gatewayUrl}
+                    </Text>
+                  </View>
+
+                  {/* Agent ID */}
+                  <View>
+                    <Text variant="small" style={{ color: '#6B7280' }}>
+                      Default Agent
+                    </Text>
+                    <Text variant="p" style={{ color: '#111827' }}>
+                      {clawdConfig.defaultAgentId}
+                    </Text>
+                  </View>
+
+                  {/* Last Used */}
+                  {clawdConfig.lastUsedAt && (
+                    <View>
+                      <Text variant="small" style={{ color: '#6B7280' }}>
+                        Last Used
+                      </Text>
+                      <Text variant="p" style={{ color: '#111827' }}>
+                        {new Date(clawdConfig.lastUsedAt).toLocaleString()}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Action Buttons */}
+                <View className="mt-4 gap-3">
+                  <Button
+                    onPress={handleConfigureClawd}
+                    size="md"
+                    className="w-full"
+                  >
+                    Edit Chat Settings
+                  </Button>
+
+                  <Button
+                    onPress={handleClearHistory}
+                    size="md"
+                    className="w-full bg-red-500"
+                  >
+                    Clear Chat History
                   </Button>
                 </View>
               </Card.Body>

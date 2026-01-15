@@ -1,9 +1,7 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Drawer } from "expo-router/drawer";
 import React, { useCallback, useEffect } from "react";
-import { Text } from "react-native";
-
-import { View } from "react-native";
+import { Text, View } from "react-native";
+import { Chat, GitFork, List } from "phosphor-react-native";
 import { LoadingScreen } from "@/components/loading-screen";
 import { BridgeStatusBadge } from "@/components/BridgeStatusIndicator";
 import { useAuth } from "@/contexts/auth-context";
@@ -52,7 +50,7 @@ function DrawerLayout() {
     <Drawer
       screenOptions={{
         headerTintColor: '#111827',
-        headerStyle: { backgroundColor: '#f0efea' },
+        headerStyle: { backgroundColor: '#ffffff' },
         headerTitleStyle: {
           fontWeight: "600",
           color: '#111827',
@@ -61,6 +59,9 @@ function DrawerLayout() {
         headerTitleAlign: 'left',
         headerRight: renderHeaderRight,
         drawerStyle: { backgroundColor: '#f0efea' },
+        drawerIcon: ({ color, size }) => (
+          <List size={size} color={color} weight="bold" />
+        ),
       }}
     >
       <Drawer.Screen
@@ -71,10 +72,10 @@ function DrawerLayout() {
             <Text style={{ color: focused ? color : '#111827' }}>Home</Text>
           ),
           drawerIcon: ({ size, color, focused }) => (
-            <Ionicons
-              name="chatbubble-outline"
+            <Chat
               size={size}
               color={focused ? color : '#111827'}
+              weight="bold"
             />
           ),
         }}
@@ -87,10 +88,10 @@ function DrawerLayout() {
             <Text style={{ color: focused ? color : '#111827' }}>Connection</Text>
           ),
           drawerIcon: ({ size, color, focused }) => (
-            <Ionicons
-              name="git-network-outline"
+            <GitFork
               size={size}
               color={focused ? color : '#111827'}
+              weight="bold"
             />
           ),
         }}
