@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { View, ScrollView, Alert, StyleSheet } from 'react-native';
+import { View, ScrollView, Alert, StyleSheet, useColorScheme } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Button } from 'heroui-native';
 import * as DocumentPicker from 'expo-document-picker';
@@ -35,6 +35,8 @@ const styles = StyleSheet.create({
 
 export default function GatewaySetupScreen() {
   const { connect, refreshConfigStatus } = useBridge();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   // Form state
   const [host, setHost] = useState('');
@@ -302,18 +304,18 @@ export default function GatewaySetupScreen() {
       >
         <View className="gap-6 mt-8">
           {/* Header */}
-          <View className="gap-2">
-            <Text variant="h1" style={{ color: '#111827' }}>
+          <View className="gap-2" style={{ alignItems: 'center', width: '100%' }}>
+            <Text variant="h1" style={{ color: isDark ? '#e5e5e5' : '#111827', textAlign: 'center', width: '100%' }}>
               Connect to Gateway
             </Text>
-            <Text variant="lead" style={{ color: '#6B7280' }}>
+            <Text variant="lead" style={{ color: isDark ? '#9CA3AF' : '#6B7280', textAlign: 'center', width: '100%' }}>
               Configure SSH connection to your clawd.bot Gateway server
             </Text>
           </View>
 
           {/* SSH Host */}
           <TextField className="mb-4">
-            <TextField.Label className="font-medium mb-1" style={{ color: '#6B7280' }}>
+            <TextField.Label className="font-medium mb-1" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
               SSH Host
             </TextField.Label>
             <TextField.Input
@@ -323,13 +325,21 @@ export default function GatewaySetupScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="url"
-              className="bg-white border border-gray-200 rounded-xl px-4 h-14 text-gray-900"
+              style={{
+                backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+                borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                height: 56,
+                color: isDark ? '#e5e5e5' : '#111827',
+              }}
             />
           </TextField>
 
           {/* SSH Port */}
           <TextField className="mb-4">
-            <TextField.Label className="font-medium mb-1" style={{ color: '#6B7280' }}>
+            <TextField.Label className="font-medium mb-1" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
               SSH Port
             </TextField.Label>
             <TextField.Input
@@ -337,13 +347,21 @@ export default function GatewaySetupScreen() {
               value={port}
               onChangeText={setPort}
               keyboardType="number-pad"
-              className="bg-white border border-gray-200 rounded-xl px-4 h-14 text-gray-900"
+              style={{
+                backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+                borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                height: 56,
+                color: isDark ? '#e5e5e5' : '#111827',
+              }}
             />
           </TextField>
 
           {/* Username */}
           <TextField className="mb-4">
-            <TextField.Label className="font-medium mb-1" style={{ color: '#6B7280' }}>
+            <TextField.Label className="font-medium mb-1" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
               Username
             </TextField.Label>
             <TextField.Input
@@ -352,13 +370,21 @@ export default function GatewaySetupScreen() {
               onChangeText={setUsername}
               autoCapitalize="none"
               autoCorrect={false}
-              className="bg-white border border-gray-200 rounded-xl px-4 h-14 text-gray-900"
+              style={{
+                backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+                borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                height: 56,
+                color: isDark ? '#e5e5e5' : '#111827',
+              }}
             />
           </TextField>
 
           {/* SSH Identity File (Private Key) */}
           <View className="gap-2 mb-4">
-            <Text variant="small" style={{ color: '#374151', fontWeight: '600' }}>
+            <Text variant="small" style={{ color: isDark ? '#e5e5e5' : '#374151', fontWeight: '600' }}>
               SSH Identity File (Private Key)
             </Text>
 
@@ -369,16 +395,22 @@ export default function GatewaySetupScreen() {
                 variant={useFilePicker ? 'solid' : 'bordered'}
                 size="sm"
                 className="flex-1"
+                style={!useFilePicker && isDark ? { borderColor: '#3a3a3a' } : undefined}
               >
-                Upload File
+                <Text style={{ color: useFilePicker ? '#ffffff' : (isDark ? '#e5e5e5' : '#111827') }}>
+                  Upload File
+                </Text>
               </Button>
               <Button
                 onPress={() => setUseFilePicker(false)}
                 variant={!useFilePicker ? 'solid' : 'bordered'}
                 size="sm"
                 className="flex-1"
+                style={useFilePicker && isDark ? { borderColor: '#3a3a3a' } : undefined}
               >
-                Paste Key
+                <Text style={{ color: !useFilePicker ? '#ffffff' : (isDark ? '#e5e5e5' : '#111827') }}>
+                  Paste Key
+                </Text>
               </Button>
             </View>
 
@@ -388,11 +420,14 @@ export default function GatewaySetupScreen() {
                   onPress={pickIdentityFile}
                   variant="bordered"
                   className="w-full"
+                  style={isDark ? { borderColor: '#3a3a3a' } : undefined}
                 >
-                  {identityFileName || 'Select Identity File'}
+                  <Text style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
+                    {identityFileName || 'Select Identity File'}
+                  </Text>
                 </Button>
                 {identityFileName && (
-                  <Text variant="small" style={{ color: '#9CA3AF', fontSize: 12 }}>
+                  <Text variant="small" style={{ color: isDark ? '#6B7280' : '#9CA3AF', fontSize: 12 }}>
                     Selected: {identityFileName}
                   </Text>
                 )}
@@ -408,11 +443,20 @@ export default function GatewaySetupScreen() {
                     numberOfLines={8}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 min-h-32"
-                    style={{ textAlignVertical: 'top' }}
+                    style={{
+                      backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+                      borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+                      borderWidth: 1,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      minHeight: 128,
+                      color: isDark ? '#e5e5e5' : '#111827',
+                      textAlignVertical: 'top',
+                    }}
                   />
                 </TextField>
-                <Text variant="small" style={{ color: '#9CA3AF', fontSize: 12 }}>
+                <Text variant="small" style={{ color: isDark ? '#6B7280' : '#9CA3AF', fontSize: 12 }}>
                   Paste the entire contents of your private key file (e.g., ~/.ssh/id_rsa or ~/.ssh/id_ed25519)
                 </Text>
               </>
@@ -421,7 +465,7 @@ export default function GatewaySetupScreen() {
 
           {/* Project Root */}
           <TextField className="mb-4">
-            <TextField.Label className="font-medium mb-1" style={{ color: '#6B7280' }}>
+            <TextField.Label className="font-medium mb-1" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
               Project Root Path
             </TextField.Label>
             <TextField.Input
@@ -430,13 +474,21 @@ export default function GatewaySetupScreen() {
               onChangeText={setProjectRoot}
               autoCapitalize="none"
               autoCorrect={false}
-              className="bg-white border border-gray-200 rounded-xl px-4 h-14 text-gray-900"
+              style={{
+                backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+                borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                height: 56,
+                color: isDark ? '#e5e5e5' : '#111827',
+              }}
             />
           </TextField>
 
           {/* CLI Path */}
           <TextField className="mb-4">
-            <TextField.Label className="font-medium mb-1" style={{ color: '#6B7280' }}>
+            <TextField.Label className="font-medium mb-1" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
               clawdbot CLI Path
             </TextField.Label>
             <TextField.Input
@@ -445,7 +497,15 @@ export default function GatewaySetupScreen() {
               onChangeText={setCliPath}
               autoCapitalize="none"
               autoCorrect={false}
-              className="bg-white border border-gray-200 rounded-xl px-4 h-14 text-gray-900"
+              style={{
+                backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+                borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                height: 56,
+                color: isDark ? '#e5e5e5' : '#111827',
+              }}
             />
           </TextField>
 
@@ -458,8 +518,11 @@ export default function GatewaySetupScreen() {
               variant="bordered"
               size="lg"
               className="w-full"
+              style={isDark ? { borderColor: '#3a3a3a' } : undefined}
             >
-              Test Connection
+              <Text style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
+                Test Connection
+              </Text>
             </Button>
 
             <Button
@@ -475,8 +538,8 @@ export default function GatewaySetupScreen() {
           </View>
 
           {/* Info */}
-          <View className="rounded-lg bg-white/60 p-4 mb-6">
-            <Text variant="small" style={{ color: '#6B7280', lineHeight: 20 }}>
+          <View style={{ borderRadius: 8, backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.6)', padding: 16, marginBottom: 24 }}>
+            <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280', lineHeight: 20 }}>
               This information is securely stored on your device. Your Gateway
               must be running and accessible via SSH for connection to succeed.
               {'\n\n'}

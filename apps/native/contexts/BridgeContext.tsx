@@ -63,6 +63,24 @@ export interface BridgeProviderProps {
   autoReconnect?: boolean;
 }
 
+// Singleton connection manager to prevent multiple instances
+let singletonConnectionManager: BridgeConnectionManager | null = null;
+let singletonDeviceId: string | null = null;
+
+function getConnectionManager(deviceId: string, autoReconnect: boolean): BridgeConnectionManager {
+  if (!singletonConnectionManager || singletonDeviceId !== deviceId) {
+    console.log('[BridgeContext] Creating new connection manager singleton');
+    singletonDeviceId = deviceId;
+    singletonConnectionManager = createBridgeConnectionManager({
+      deviceId,
+      autoReconnect,
+    });
+  } else {
+    console.log('[BridgeContext] Reusing existing connection manager singleton');
+  }
+  return singletonConnectionManager;
+}
+
 export function BridgeProvider({
   children,
   deviceId: providedDeviceId,
@@ -71,16 +89,11 @@ export function BridgeProvider({
   // Get auth context to access session token
   const { session } = useAuth();
 
-  // Generate or use provided device ID
+  // Generate or use provided device ID (stable across re-renders)
   const deviceId = useRef(providedDeviceId || uuidv4()).current;
 
-  // Create connection manager (only once)
-  const connectionManager = useRef<BridgeConnectionManager>(
-    createBridgeConnectionManager({
-      deviceId,
-      autoReconnect,
-    })
-  ).current;
+  // Get singleton connection manager
+  const connectionManager = getConnectionManager(deviceId, autoReconnect);
 
   // State
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
@@ -195,6 +208,54 @@ export function BridgeProvider({
     console.log('[BridgeContext] Session token', token ? `available (${token.length} chars)` : 'not available');
     connectionManager.setSessionToken(token);
   }, [session, connectionManager]);
+
+  /**
+   * Auto-connect to Gateway when session is available
+   */
+  const hasAttemptedAutoConnect = useRef(false);
+  const autoConnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const token = session?.session?.token || session?.token || null;
+    const currentStatus = connectionManager.getStatus();
+    const serverUrl = process.env.EXPO_PUBLIC_SERVER_URL;
+
+    // Reset flag if session is cleared
+    if (!token) {
+      hasAttemptedAutoConnect.current = false;
+      return;
+    }
+
+    // Only auto-connect once per session if:
+    // 1. We have a session token
+    // 2. We have a server URL configured
+    // 3. We're currently disconnected
+    // 4. We haven't already attempted auto-connect
+    // 5. No timer is already pending
+    if (token && serverUrl && currentStatus === 'disconnected' && !hasAttemptedAutoConnect.current && !autoConnectTimerRef.current) {
+      hasAttemptedAutoConnect.current = true;
+      console.log('[BridgeContext] Auto-connecting to Gateway in 2s...');
+
+      // Small delay to ensure everything is initialized
+      autoConnectTimerRef.current = setTimeout(() => {
+        autoConnectTimerRef.current = null;
+        console.log('[BridgeContext] Executing auto-connect...');
+        connect().catch((err) => {
+          console.log('[BridgeContext] Auto-connect failed, will retry via autoReconnect:', err);
+        });
+      }, 2000);
+    }
+  }, [session, connect, connectionManager]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoConnectTimerRef.current) {
+        clearTimeout(autoConnectTimerRef.current);
+        autoConnectTimerRef.current = null;
+      }
+    };
+  }, []);
 
   /**
    * Cleanup on unmount

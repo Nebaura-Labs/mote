@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, useColorScheme } from 'react-native';
 import { router } from 'expo-router';
 import { Button, Card } from 'heroui-native';
 import { ScreenWrapper } from '@/components/ui/screen-wrapper';
@@ -32,6 +32,8 @@ const styles = StyleSheet.create({
 });
 
 export default function Home() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const { isConfigured, refreshConfigStatus, disconnect } = useBridge();
   const [sshConfig, setSSHConfig] = useState<SSHConfig | null>(null);
   const [hasIdentityFile, setHasIdentityFile] = useState(false);
@@ -176,10 +178,10 @@ export default function Home() {
         <View className="gap-6">
           {/* Header */}
           <View className="gap-2">
-            <Text variant="h1" style={{ color: '#111827' }}>
+            <Text variant="h1" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
               Mote
             </Text>
-            <Text variant="lead" style={{ color: '#6B7280' }}>
+            <Text variant="lead" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
               Voice companion for clawd.bot
             </Text>
           </View>
@@ -189,56 +191,63 @@ export default function Home() {
 
           {/* SSH Configuration */}
           {isConfigured && sshConfig && (
-            <Card className="bg-white border border-gray-200 rounded-xl">
+            <Card
+              className="rounded-xl"
+              style={{
+                backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+                borderWidth: 1,
+                borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+              }}
+            >
               <Card.Body className="p-4">
-                <Text variant="h4" className="mb-4" style={{ color: '#111827' }}>
+                <Text variant="h4" className="mb-4" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
                   Gateway Configuration
                 </Text>
 
                 <View className="gap-3">
                   {/* SSH Host */}
                   <View>
-                    <Text variant="small" style={{ color: '#6B7280' }}>
+                    <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                       SSH Host
                     </Text>
-                    <Text variant="p" style={{ color: '#111827' }}>
+                    <Text variant="p" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
                       {sshConfig.host}:{sshConfig.port}
                     </Text>
                   </View>
 
                   {/* Username */}
                   <View>
-                    <Text variant="small" style={{ color: '#6B7280' }}>
+                    <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                       Username
                     </Text>
-                    <Text variant="p" style={{ color: '#111827' }}>
+                    <Text variant="p" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
                       {sshConfig.username}
                     </Text>
                   </View>
 
                   {/* Project Root */}
                   <View>
-                    <Text variant="small" style={{ color: '#6B7280' }}>
+                    <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                       Project Root
                     </Text>
-                    <Text variant="p" style={{ color: '#111827' }}>
+                    <Text variant="p" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
                       {sshConfig.projectRoot}
                     </Text>
                   </View>
 
                   {/* CLI Path */}
                   <View>
-                    <Text variant="small" style={{ color: '#6B7280' }}>
+                    <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                       CLI Path
                     </Text>
-                    <Text variant="p" style={{ color: '#111827' }}>
+                    <Text variant="p" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
                       {sshConfig.cliPath}
                     </Text>
                   </View>
 
                   {/* SSH Key Status */}
                   <View>
-                    <Text variant="small" style={{ color: '#6B7280' }}>
+                    <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                       SSH Key
                     </Text>
                     <View className="flex-row items-center gap-2 mt-1">
@@ -270,8 +279,13 @@ export default function Home() {
                     variant="bordered"
                     size="md"
                     className="w-full"
+                    style={{
+                      borderColor: isDark ? '#3a3a3a' : undefined,
+                    }}
                   >
-                    Test Connection
+                    <Text style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
+                      Test Connection
+                    </Text>
                   </Button>
 
                   <Button
@@ -281,7 +295,9 @@ export default function Home() {
                     size="md"
                     className="w-full"
                   >
-                    Reconfigure Gateway
+                    <Text style={{ color: '#ef4444' }}>
+                      Reconfigure Gateway
+                    </Text>
                   </Button>
                 </View>
               </Card.Body>
@@ -290,29 +306,36 @@ export default function Home() {
 
           {/* Chat Configuration */}
           {clawdConfig && (
-            <Card className="bg-white border border-gray-200 rounded-xl">
+            <Card
+              className="rounded-xl"
+              style={{
+                backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+                borderWidth: 1,
+                borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+              }}
+            >
               <Card.Body className="p-4">
-                <Text variant="h4" className="mb-4" style={{ color: '#111827' }}>
+                <Text variant="h4" className="mb-4" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
                   Chat Configuration
                 </Text>
 
                 <View className="gap-3">
                   {/* Gateway URL */}
                   <View>
-                    <Text variant="small" style={{ color: '#6B7280' }}>
+                    <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                       Gateway URL
                     </Text>
-                    <Text variant="p" style={{ color: '#111827' }}>
+                    <Text variant="p" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
                       {clawdConfig.gatewayUrl}
                     </Text>
                   </View>
 
                   {/* Agent ID */}
                   <View>
-                    <Text variant="small" style={{ color: '#6B7280' }}>
+                    <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                       Default Agent
                     </Text>
-                    <Text variant="p" style={{ color: '#111827' }}>
+                    <Text variant="p" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
                       {clawdConfig.defaultAgentId}
                     </Text>
                   </View>
@@ -320,10 +343,10 @@ export default function Home() {
                   {/* Last Used */}
                   {clawdConfig.lastUsedAt && (
                     <View>
-                      <Text variant="small" style={{ color: '#6B7280' }}>
+                      <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                         Last Used
                       </Text>
-                      <Text variant="p" style={{ color: '#111827' }}>
+                      <Text variant="p" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
                         {new Date(clawdConfig.lastUsedAt).toLocaleString()}
                       </Text>
                     </View>
@@ -337,7 +360,9 @@ export default function Home() {
                     size="md"
                     className="w-full"
                   >
-                    Edit Chat Settings
+                    <Text style={{ color: '#ffffff' }}>
+                      Edit Chat Settings
+                    </Text>
                   </Button>
 
                   <Button
@@ -345,7 +370,9 @@ export default function Home() {
                     size="md"
                     className="w-full bg-red-500"
                   >
-                    Clear Chat History
+                    <Text style={{ color: '#ffffff' }}>
+                      Clear Chat History
+                    </Text>
                   </Button>
                 </View>
               </Card.Body>
@@ -353,30 +380,44 @@ export default function Home() {
           )}
 
           {/* Not Configured */}
-          {!isConfigured && !isLoading && (
-            <Card className="bg-white border border-gray-200 rounded-xl">
+          {!clawdConfig && !isLoading && (
+            <Card
+              className="rounded-xl"
+              style={{
+                backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+                borderWidth: 1,
+                borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+              }}
+            >
               <Card.Body className="p-4">
-                <Text variant="h4" className="mb-2" style={{ color: '#111827' }}>
-                  No Gateway Configured
+                <Text variant="h4" className="mb-2" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
+                  No Chat API Configured
                 </Text>
-                <Text variant="p" className="mb-4" style={{ color: '#6B7280' }}>
-                  Configure your SSH connection to clawd.bot Gateway to get started.
+                <Text variant="p" className="mb-4" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                  Configure your clawd.bot chat API connection to start chatting.
                 </Text>
                 <Button
-                  onPress={() => router.push('/gateway-setup')}
+                  onPress={() => router.push('/clawd-setup')}
                   color="primary"
                   size="md"
                   className="w-full"
                 >
-                  Configure Gateway
+                  <Text style={{ color: '#ffffff' }}>
+                    Configure Chat API
+                  </Text>
                 </Button>
               </Card.Body>
             </Card>
           )}
 
           {/* Info Card */}
-          <View className="rounded-lg bg-white/60 p-4">
-            <Text variant="small" style={{ color: '#6B7280', lineHeight: 20 }}>
+          <View
+            className="rounded-lg p-4"
+            style={{
+              backgroundColor: isDark ? 'rgba(42, 42, 42, 0.6)' : 'rgba(255, 255, 255, 0.6)',
+            }}
+          >
+            <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280', lineHeight: 20 }}>
               Mote connects to your clawd.bot Gateway server via SSH tunnel.
               {'\n\n'}
               🔐 All credentials are stored securely on your device.

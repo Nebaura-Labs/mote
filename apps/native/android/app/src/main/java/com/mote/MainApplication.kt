@@ -1,4 +1,4 @@
-package studio.nebaura.mote
+package com.mote
 
 import android.app.Application
 import android.content.res.Configuration

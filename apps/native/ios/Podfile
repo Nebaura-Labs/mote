@@ -23,17 +23,11 @@ prepare_react_native_project!
 target 'Mote' do
   use_expo_modules!
 
-  # Native SSH library for iOS
-  pod 'NMSSH', '~> 2.3'
-
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
   else
     config_command = [
-      'node',
-      '--no-warnings',
-      '--eval',
-      'require(\'expo/bin/autolinking\')',
+      'npx',
       'expo-modules-autolinking',
       'react-native-config',
       '--json',
@@ -62,25 +56,5 @@ target 'Mote' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
-
-    # Inject ShellExecutor module into ExpoModulesProvider
-    expo_modules_provider_path = File.join(installer.sandbox.root, 'Target Support Files/Pods-Mote/ExpoModulesProvider.swift')
-    if File.exist?(expo_modules_provider_path)
-      content = File.read(expo_modules_provider_path)
-
-      # Check if ShellExecutorModule is already added
-      unless content.include?('ShellExecutorModule.self')
-        # Add ShellExecutorModule.self to the module list (before the closing ])
-        modified_content = content.gsub(
-          /(SecureStoreModule\.self\n)/,
-          "\\1      ShellExecutorModule.self,\n"
-        )
-
-        File.write(expo_modules_provider_path, modified_content)
-        puts "[ShellExecutor] ✅ Added ShellExecutorModule to ExpoModulesProvider"
-      else
-        puts "[ShellExecutor] ℹ️  ShellExecutorModule already in ExpoModulesProvider"
-      end
-    end
   end
 end

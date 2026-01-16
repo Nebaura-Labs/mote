@@ -1,7 +1,7 @@
 import { Drawer } from "expo-router/drawer";
 import React, { useCallback, useEffect } from "react";
-import { Text, View } from "react-native";
-import { Chat, GitFork, List } from "phosphor-react-native";
+import { Text, View, useColorScheme } from "react-native";
+import { Chat, GitFork, List, Gear, WifiHigh } from "phosphor-react-native";
 import { LoadingScreen } from "@/components/loading-screen";
 import { BridgeStatusBadge } from "@/components/BridgeStatusIndicator";
 import { useAuth } from "@/contexts/auth-context";
@@ -9,6 +9,8 @@ import { useBridge } from "@/contexts/BridgeContext";
 import { useRouter, useRootNavigationState } from "expo-router";
 
 function DrawerLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const { isAuthenticated, isLoading } = useAuth();
   const { isConfigured } = useBridge();
   const router = useRouter();
@@ -22,15 +24,6 @@ function DrawerLayout() {
       router.replace("/(auth)");
     }
   }, [isAuthenticated, isLoading, router, navigationState?.key]);
-
-  // Redirect to Gateway setup if authenticated but not configured
-  useEffect(() => {
-    if (!navigationState?.key || isLoading) return;
-
-    if (isAuthenticated && !isConfigured) {
-      router.replace("/gateway-setup");
-    }
-  }, [isAuthenticated, isLoading, isConfigured, router, navigationState?.key]);
 
   const renderHeaderRight = useCallback(() => (
     <View style={{ marginRight: 16 }}>
@@ -49,16 +42,25 @@ function DrawerLayout() {
   return (
     <Drawer
       screenOptions={{
-        headerTintColor: '#111827',
-        headerStyle: { backgroundColor: '#ffffff' },
+        headerTintColor: isDark ? '#e5e5e5' : '#111827',
+        headerStyle: {
+          backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
+          borderBottomWidth: 2,
+          borderBottomColor: '#007AFF',
+        },
         headerTitleStyle: {
           fontWeight: "600",
-          color: '#111827',
+          color: isDark ? '#e5e5e5' : '#111827',
           fontSize: 20,
         },
         headerTitleAlign: 'left',
         headerRight: renderHeaderRight,
-        drawerStyle: { backgroundColor: '#f0efea' },
+        drawerStyle: { backgroundColor: isDark ? '#1a1a1a' : '#f0efea' },
+        drawerActiveTintColor: '#007AFF',
+        drawerInactiveTintColor: isDark ? '#9CA3AF' : '#6B7280',
+        drawerLabelStyle: {
+          marginLeft: -16,
+        },
         drawerIcon: ({ color, size }) => (
           <List size={size} color={color} weight="bold" />
         ),
@@ -68,13 +70,13 @@ function DrawerLayout() {
         name="index"
         options={{
           headerTitle: "Chat",
-          drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : '#111827' }}>Home</Text>
+          drawerLabel: ({ color }) => (
+            <Text style={{ color }}>Home</Text>
           ),
-          drawerIcon: ({ size, color, focused }) => (
+          drawerIcon: ({ size, color }) => (
             <Chat
               size={size}
-              color={focused ? color : '#111827'}
+              color={color}
               weight="bold"
             />
           ),
@@ -84,13 +86,45 @@ function DrawerLayout() {
         name="connection"
         options={{
           headerTitle: "Connection",
-          drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : '#111827' }}>Connection</Text>
+          drawerLabel: ({ color }) => (
+            <Text style={{ color }}>Connection</Text>
           ),
-          drawerIcon: ({ size, color, focused }) => (
+          drawerIcon: ({ size, color }) => (
             <GitFork
               size={size}
-              color={focused ? color : '#111827'}
+              color={color}
+              weight="bold"
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="hardware"
+        options={{
+          headerTitle: "Hardware",
+          drawerLabel: ({ color }) => (
+            <Text style={{ color }}>Hardware</Text>
+          ),
+          drawerIcon: ({ size, color }) => (
+            <WifiHigh
+              size={size}
+              color={color}
+              weight="bold"
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="settings"
+        options={{
+          headerTitle: "Settings",
+          drawerLabel: ({ color }) => (
+            <Text style={{ color }}>Settings</Text>
+          ),
+          drawerIcon: ({ size, color }) => (
+            <Gear
+              size={size}
+              color={color}
               weight="bold"
             />
           ),

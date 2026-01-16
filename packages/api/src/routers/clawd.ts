@@ -146,7 +146,10 @@ export const clawdRouter = {
       const agentId = input.agentId || config.defaultAgentId;
 
       // Generate session key if not provided
-      const sessionKey = input.sessionKey || crypto.randomUUID();
+      // Use discord format to inherit Discord's personality/context files
+      // Format: agent:{agentId}:discord:channel:{channelId}
+      // Use a fixed "mote-app" channel ID so all mobile users share context
+      const sessionKey = input.sessionKey || `agent:${agentId}:discord:channel:mote-app-${userId.substring(0, 8)}`;
       const idempotencyKey = crypto.randomUUID();
 
       // Save user message to database
@@ -165,7 +168,7 @@ export const clawdRouter = {
       const gateway = await gatewayClientPool.getClient(userId, token, config.gatewayUrl);
 
       // Send chat message and wait for complete response
-      console.log(`[clawd] Sending chat message for user ${userId}`);
+      console.log(`[clawd] Sending chat message for user ${userId} with sessionKey: ${sessionKey}`);
       const chatResponse = await gateway.sendChatMessageAndWait({
         sessionKey,
         message: input.message,

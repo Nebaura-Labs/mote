@@ -9,6 +9,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { AppThemeProvider } from "@/contexts/app-theme-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { BridgeProvider } from "@/contexts/BridgeContext";
+import { MoteHardwareProvider } from "@/contexts/MoteHardwareContext";
 import { queryClient } from "@/utils/orpc";
 
 function StackLayout() {
@@ -29,9 +30,11 @@ export default function Layout() {
           <AppThemeProvider>
             <HeroUINativeProvider>
               <AuthProvider>
-                <BridgeProvider autoReconnect={true}>
-                  <StackLayout />
-                </BridgeProvider>
+                <MoteHardwareProvider>
+                  <BridgeProvider autoReconnect={true}>
+                    <StackLayout />
+                  </BridgeProvider>
+                </MoteHardwareProvider>
               </AuthProvider>
             </HeroUINativeProvider>
           </AppThemeProvider>

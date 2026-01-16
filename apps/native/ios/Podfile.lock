@@ -1,5 +1,8 @@
 PODS:
   - CocoaAsyncSocket (7.6.5)
+  - EXAV (16.0.8):
+    - ExpoModulesCore
+    - ReactCommon/turbomodule/core
   - EXConstants (18.0.13):
     - ExpoModulesCore
   - Expo (54.0.31):
@@ -28,6 +31,8 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - ExpoAsset (12.0.12):
+    - ExpoModulesCore
+  - ExpoAudio (1.1.1):
     - ExpoModulesCore
   - ExpoDocumentPicker (12.0.2):
     - ExpoModulesCore
@@ -75,7 +80,7 @@ PODS:
   - hermes-engine (0.81.5):
     - hermes-engine/Pre-built (= 0.81.5)
   - hermes-engine/Pre-built (0.81.5)
-  - NMSSH (2.3.1)
+  - MultiplatformBleAdapter (0.2.0)
   - RCTDeprecation (0.81.5)
   - RCTRequired (0.81.5)
   - RCTTypeSafety (0.81.5):
@@ -1355,6 +1360,29 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
+  - react-native-ble-plx (3.5.0):
+    - hermes-engine
+    - MultiplatformBleAdapter (= 0.2.0)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-get-random-values (2.0.0):
     - hermes-engine
     - RCTRequired
@@ -1987,7 +2015,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNSVG (15.12.1):
+  - RNSVG (15.15.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2008,9 +2036,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNSVG/common (= 15.12.1)
+    - RNSVG/common (= 15.15.1)
     - Yoga
-  - RNSVG/common (15.12.1):
+  - RNSVG/common (15.15.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2106,9 +2134,11 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - "EXAV (from `../../../node_modules/.bun/expo-av@16.0.8+bb59364f7f3853c3/node_modules/expo-av/ios`)"
   - "EXConstants (from `../../../node_modules/.bun/expo-constants@18.0.13+bb59364f7f3853c3/node_modules/expo-constants/ios`)"
   - "Expo (from `../../../node_modules/.bun/expo@54.0.31+bb59364f7f3853c3/node_modules/expo`)"
   - "ExpoAsset (from `../../../node_modules/.bun/expo-asset@12.0.12+e1a0cc412c37bc90/node_modules/expo-asset/ios`)"
+  - "ExpoAudio (from `../../../node_modules/.bun/expo-audio@1.1.1+56f408dac8b34ea7/node_modules/expo-audio/ios`)"
   - "ExpoDocumentPicker (from `../../../node_modules/.bun/expo-document-picker@12.0.2+bb59364f7f3853c3/node_modules/expo-document-picker/ios`)"
   - "ExpoFileSystem (from `../../../node_modules/.bun/expo-file-system@19.0.21+bb59364f7f3853c3/node_modules/expo-file-system/ios`)"
   - "ExpoFont (from `../../../node_modules/.bun/expo-font@14.0.10+bb59364f7f3853c3/node_modules/expo-font/ios`)"
@@ -2121,7 +2151,6 @@ DEPENDENCIES:
   - "ExpoSecureStore (from `../../../node_modules/.bun/expo-secure-store@15.0.8+bb59364f7f3853c3/node_modules/expo-secure-store/ios`)"
   - "FBLazyVector (from `../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/Libraries/FBLazyVector`)"
   - "hermes-engine (from `../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)"
-  - NMSSH (~> 2.3)
   - "RCTDeprecation (from `../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)"
   - "RCTRequired (from `../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/Libraries/Required`)"
   - "RCTTypeSafety (from `../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/Libraries/TypeSafety`)"
@@ -2156,6 +2185,7 @@ DEPENDENCIES:
   - "React-logger (from `../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/ReactCommon/logger`)"
   - "React-Mapbuffer (from `../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/ReactCommon`)"
   - "React-microtasksnativemodule (from `../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)"
+  - "react-native-ble-plx (from `../../../node_modules/.bun/react-native-ble-plx@3.5.0+ff07e88fd3a9db7d/node_modules/react-native-ble-plx`)"
   - "react-native-get-random-values (from `../../../node_modules/.bun/react-native-get-random-values@2.0.0+ff07e88fd3a9db7d/node_modules/react-native-get-random-values`)"
   - "react-native-keyboard-controller (from `../../../node_modules/.bun/react-native-keyboard-controller@1.18.5+e236f514d888a0eb/node_modules/react-native-keyboard-controller`)"
   - "react-native-safe-area-context (from `../../../node_modules/.bun/react-native-safe-area-context@5.6.2+ff07e88fd3a9db7d/node_modules/react-native-safe-area-context`)"
@@ -2194,22 +2224,26 @@ DEPENDENCIES:
   - "RNGestureHandler (from `../../../node_modules/.bun/react-native-gesture-handler@2.30.0+ff07e88fd3a9db7d/node_modules/react-native-gesture-handler`)"
   - "RNReanimated (from `../../../node_modules/.bun/react-native-reanimated@4.1.6+fa69e7c6025435ca/node_modules/react-native-reanimated`)"
   - "RNScreens (from `../../../node_modules/.bun/react-native-screens@4.16.0+ff07e88fd3a9db7d/node_modules/react-native-screens`)"
-  - "RNSVG (from `../../../node_modules/.bun/react-native-svg@15.12.1+ff07e88fd3a9db7d/node_modules/react-native-svg`)"
+  - "RNSVG (from `../../../node_modules/.bun/react-native-svg@15.15.1+ff07e88fd3a9db7d/node_modules/react-native-svg`)"
   - "RNWorklets (from `../../../node_modules/.bun/react-native-worklets@0.5.1+ff07e88fd3a9db7d/node_modules/react-native-worklets`)"
   - "Yoga (from `../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/ReactCommon/yoga`)"
 
 SPEC REPOS:
   trunk:
     - CocoaAsyncSocket
-    - NMSSH
+    - MultiplatformBleAdapter
 
 EXTERNAL SOURCES:
+  EXAV:
+    :path: "../../../node_modules/.bun/expo-av@16.0.8+bb59364f7f3853c3/node_modules/expo-av/ios"
   EXConstants:
     :path: "../../../node_modules/.bun/expo-constants@18.0.13+bb59364f7f3853c3/node_modules/expo-constants/ios"
   Expo:
     :path: "../../../node_modules/.bun/expo@54.0.31+bb59364f7f3853c3/node_modules/expo"
   ExpoAsset:
     :path: "../../../node_modules/.bun/expo-asset@12.0.12+e1a0cc412c37bc90/node_modules/expo-asset/ios"
+  ExpoAudio:
+    :path: "../../../node_modules/.bun/expo-audio@1.1.1+56f408dac8b34ea7/node_modules/expo-audio/ios"
   ExpoDocumentPicker:
     :path: "../../../node_modules/.bun/expo-document-picker@12.0.2+bb59364f7f3853c3/node_modules/expo-document-picker/ios"
   ExpoFileSystem:
@@ -2301,6 +2335,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../../../node_modules/.bun/react-native@0.81.5+ff07e88fd3a9db7d/node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-ble-plx:
+    :path: "../../../node_modules/.bun/react-native-ble-plx@3.5.0+ff07e88fd3a9db7d/node_modules/react-native-ble-plx"
   react-native-get-random-values:
     :path: "../../../node_modules/.bun/react-native-get-random-values@2.0.0+ff07e88fd3a9db7d/node_modules/react-native-get-random-values"
   react-native-keyboard-controller:
@@ -2378,7 +2414,7 @@ EXTERNAL SOURCES:
   RNScreens:
     :path: "../../../node_modules/.bun/react-native-screens@4.16.0+ff07e88fd3a9db7d/node_modules/react-native-screens"
   RNSVG:
-    :path: "../../../node_modules/.bun/react-native-svg@15.12.1+ff07e88fd3a9db7d/node_modules/react-native-svg"
+    :path: "../../../node_modules/.bun/react-native-svg@15.15.1+ff07e88fd3a9db7d/node_modules/react-native-svg"
   RNWorklets:
     :path: "../../../node_modules/.bun/react-native-worklets@0.5.1+ff07e88fd3a9db7d/node_modules/react-native-worklets"
   Yoga:
@@ -2386,9 +2422,11 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
+  EXAV: b60fcf142fae6684d295bc28cd7cfcb3335570ea
   EXConstants: fce59a631a06c4151602843667f7cfe35f81e271
   Expo: 04993fbd7b06dc98ffac58da8847298470dc3db1
   ExpoAsset: f867e55ceb428aab99e1e8c082b5aee7c159ea18
+  ExpoAudio: e4cfe3a2f3317b8487460685385a9867a07fb4fb
   ExpoDocumentPicker: 3204d5169a090ddbb23c4bf035bb86c3a6ea0ec2
   ExpoFileSystem: 858a44267a3e6e9057e0888ad7c7cfbf55d52063
   ExpoFont: 35ac6191ed86bbf56b3ebd2d9154eda9fad5b509
@@ -2401,7 +2439,7 @@ SPEC CHECKSUMS:
   ExpoSecureStore: d32f751874a2ceb5aaeebeb3578e165c1ba2b24a
   FBLazyVector: e95a291ad2dadb88e42b06e0c5fb8262de53ec12
   hermes-engine: 9f4dfe93326146a1c99eb535b1cb0b857a3cd172
-  NMSSH: cd689ae535a1581a6dd9fd4600ff71247df510a6
+  MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   RCTDeprecation: 943572d4be82d480a48f4884f670135ae30bf990
   RCTRequired: 8f3cfc90cc25cf6e420ddb3e7caaaabc57df6043
   RCTTypeSafety: 16a4144ca3f959583ab019b57d5633df10b5e97c
@@ -2435,6 +2473,7 @@ SPEC CHECKSUMS:
   React-logger: 50fdb9a8236da90c0b1072da5c32ee03aeb5bf28
   React-Mapbuffer: 9050ee10c19f4f7fca8963d0211b2854d624973e
   React-microtasksnativemodule: f775db9e991c6f3b8ccbc02bfcde22770f96e23b
+  react-native-ble-plx: 1c093030510e7a070d3a268c5296aba851ae1033
   react-native-get-random-values: a603782b2b222a34533c66371614790282dba3f1
   react-native-keyboard-controller: 1ad78688f744e0ebdf3b04007b91089a254b80f9
   react-native-safe-area-context: 37e680fc4cace3c0030ee46e8987d24f5d3bdab2
@@ -2473,10 +2512,10 @@ SPEC CHECKSUMS:
   RNGestureHandler: e0d0bce5599f6120b7adf90c38d2805e2935795f
   RNReanimated: f99211b7adea41fbfb2913446c4793b7bd22b168
   RNScreens: d8d6f1792f6e7ac12b0190d33d8d390efc0c1845
-  RNSVG: 31d6639663c249b7d5abc9728dde2041eb2a3c34
+  RNSVG: cf9ae78f2edf2988242c71a6392d15ff7dd62522
   RNWorklets: dbf037ecd9631e06e2e80824d8e32e4e96368d34
   Yoga: 5934998fbeaef7845dbf698f698518695ab4cd1a
 
-PODFILE CHECKSUM: 32caa4526fb79de43c8927598f70bbacbc5f5aba
+PODFILE CHECKSUM: ca402ea8ca74e9b6faed9d48e3e8e7cdb3f73b07
 
 COCOAPODS: 1.16.2

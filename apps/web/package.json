@@ -5,7 +5,7 @@
   "scripts": {
     "build": "vite build",
     "serve": "vite preview",
-    "dev": "vite dev"
+    "dev": "vite dev --host"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
