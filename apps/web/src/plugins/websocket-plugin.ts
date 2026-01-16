@@ -26,7 +26,7 @@ export function websocketPlugin(): Plugin {
       httpServer.on("upgrade", async (req: IncomingMessage, socket: Duplex, head: Buffer) => {
         const url = new URL(req.url || "/", `http://${req.headers.host}`);
 
-        // Only handle /api/ws upgrade requests
+        // Handle /api/ws upgrade requests (chat tunnel)
         if (url.pathname === "/api/ws") {
           console.log("[websocket-plugin] Handling WebSocket upgrade for", url.pathname);
 
@@ -34,10 +34,18 @@ export function websocketPlugin(): Plugin {
           const { handleWebSocketUpgrade } = await import("../websocket/handler.js");
           handleWebSocketUpgrade(req, socket, head);
         }
+        // Handle /ws/voice upgrade requests (Mote device voice streaming)
+        else if (url.pathname === "/ws/voice") {
+          console.log("[websocket-plugin] Handling voice WebSocket upgrade for", url.pathname);
+
+          // Lazy-load the voice handler
+          const { handleVoiceWebSocketUpgrade } = await import("../websocket/voice-handler.js");
+          handleVoiceWebSocketUpgrade(req, socket, head);
+        }
         // Let other upgrades pass through (e.g., Vite HMR)
       });
 
-      console.log("[websocket-plugin] WebSocket server initialized at /api/ws");
+      console.log("[websocket-plugin] WebSocket server initialized at /api/ws and /ws/voice");
     },
   };
 }

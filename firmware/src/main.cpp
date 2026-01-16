@@ -3,6 +3,8 @@
 #include <Preferences.h>
 #include "ble_config.h"
 #include "mote_face.h"
+#include "audio.h"
+#include "voice_client.h"
 
 // Device mode
 enum DeviceMode {
@@ -11,6 +13,13 @@ enum DeviceMode {
 };
 
 DeviceMode currentMode = MODE_BLE;
+
+// Voice system state
+static bool voiceInitialized = false;
+static bool audioInitialized = false;
+static int16_t audioBuffer[AUDIO_BUFFER_SIZE];
+static unsigned long lastVoiceActivity = 0;
+static bool wasVoiceActive = false;
 
 // WiFi configuration
 char wifiSsid[32] = "";
@@ -21,6 +30,60 @@ char gatewayToken[128] = "";
 
 #define RGB_LED_PIN 38      // GPIO38 for RGB LED
 #define BATTERY_ADC_PIN 2   // GPIO2 for battery monitoring (ADC1_CH1, pin 38)
+
+/**
+ * Voice state change callback
+ * Updates face animation based on voice state
+ */
+void onVoiceStateChange(VoiceState newState) {
+  Serial.printf("[Voice] State changed to: %d\n", newState);
+
+  switch (newState) {
+    case VOICE_DISCONNECTED:
+      // Not connected - show idle face
+      setFaceState(FACE_IDLE);
+      break;
+
+    case VOICE_IDLE:
+      // Ready and listening for wake word
+      setFaceState(FACE_IDLE);
+      break;
+
+    case VOICE_LISTENING:
+      // Wake word detected, capturing command
+      setFaceState(FACE_LISTENING);
+      neopixelWrite(RGB_LED_PIN, 0, 255, 0);  // Green - listening
+      break;
+
+    case VOICE_PROCESSING:
+      // AI is processing
+      setFaceState(FACE_THINKING);
+      neopixelWrite(RGB_LED_PIN, 0, 0, 255);  // Blue - thinking
+      break;
+
+    case VOICE_SPEAKING:
+      // Playing response
+      setFaceState(FACE_SPEAKING);
+      neopixelWrite(RGB_LED_PIN, 255, 255, 0);  // Yellow - speaking
+      break;
+  }
+}
+
+/**
+ * Voice transcription callback
+ */
+void onVoiceTranscript(const char* text) {
+  Serial.printf("[Voice] Transcript: %s\n", text);
+}
+
+/**
+ * Voice audio callback - plays TTS response
+ */
+void onVoiceAudio(const uint8_t* data, size_t length) {
+  // Data is PCM 16-bit 16kHz mono
+  size_t sampleCount = length / sizeof(int16_t);
+  playAudioData((const int16_t*)data, sampleCount);
+}
 
 /**
  * Get battery voltage
@@ -156,6 +219,77 @@ void loop() {
       wifiStarted = true;
       Serial.println("[WiFi] WiFi.begin() complete, checking status...");
     }
+
+    // Initialize audio and voice after WiFi connects
+    if (wifiStarted && WiFi.status() == WL_CONNECTED && !audioInitialized) {
+      Serial.println("[Audio] Initializing audio subsystem...");
+      audioInitialized = setupAudio();
+      if (audioInitialized) {
+        Serial.println("[Audio] Audio initialized successfully");
+      } else {
+        Serial.println("[Audio] Audio initialization failed!");
+      }
+    }
+
+    // Initialize voice client after audio is ready
+    if (audioInitialized && !voiceInitialized && strlen(gatewayServer) > 0) {
+      Serial.println("[Voice] Initializing voice client...");
+
+      // Set up callbacks
+      setVoiceStateCallback(onVoiceStateChange);
+      setVoiceTranscriptCallback(onVoiceTranscript);
+      setVoiceAudioCallback(onVoiceAudio);
+
+      // Extract hostname from server URL (remove wss:// prefix if present)
+      char hostname[128];
+      const char* serverStr = gatewayServer;
+      if (strncmp(serverStr, "wss://", 6) == 0) {
+        serverStr += 6;
+      } else if (strncmp(serverStr, "ws://", 5) == 0) {
+        serverStr += 5;
+      }
+      strncpy(hostname, serverStr, sizeof(hostname) - 1);
+      hostname[sizeof(hostname) - 1] = '\0';
+
+      // Remove trailing slash if present
+      size_t len = strlen(hostname);
+      if (len > 0 && hostname[len - 1] == '/') {
+        hostname[len - 1] = '\0';
+      }
+
+      voiceInitialized = setupVoiceClient(hostname, gatewayPort, gatewayToken);
+      if (voiceInitialized) {
+        Serial.println("[Voice] Voice client initialized");
+      } else {
+        Serial.println("[Voice] Voice client initialization failed!");
+      }
+    }
+
+    // Handle voice WebSocket events
+    if (voiceInitialized) {
+      handleVoiceClient();
+
+      // Stream audio continuously for server-side wake word detection
+      VoiceState voiceState = getVoiceState();
+      if (voiceState == VOICE_IDLE || voiceState == VOICE_LISTENING) {
+        size_t samplesRead = readMicrophoneData(audioBuffer, AUDIO_BUFFER_SIZE);
+        if (samplesRead > 0) {
+          // Always send audio to server for transcription
+          sendVoiceAudio(audioBuffer, samplesRead);
+
+          // Use VAD only to detect end of speech (for processing trigger)
+          bool voiceDetected = detectVoiceActivity(audioBuffer, samplesRead);
+          if (voiceDetected) {
+            lastVoiceActivity = millis();
+            wasVoiceActive = true;
+          } else if (wasVoiceActive && (millis() - lastVoiceActivity > VAD_HOLDOFF_MS)) {
+            // Voice stopped after speaking - notify server to process
+            sendVoiceSilence();
+            wasVoiceActive = false;
+          }
+        }
+      }
+    }
   }
 
   // Handle BLE events (always, for app communication)
@@ -221,8 +355,8 @@ void loop() {
 
       drawWifiStatus(wifiConnected);
 
-      // Gateway status indicator (TODO: implement WebSocket connection)
-      bool gatewayConnected = false; // TODO: Track Gateway WebSocket state
+      // Gateway status indicator (voice WebSocket connection)
+      bool gatewayConnected = isVoiceConnected();
       drawGatewayStatus(gatewayConnected);
     } else {
       // BLE mode - show disconnected status

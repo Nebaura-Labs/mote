@@ -7,6 +7,9 @@
     },
     "./*": {
       "default": "./src/*.ts"
+    },
+    "./services/*": {
+      "default": "./src/services/*.ts"
     }
   },
   "scripts": {},
