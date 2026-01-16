@@ -259,8 +259,11 @@ export const voiceRouter = {
 			// Use the Gateway client to send message
 			const { gatewayClientPool } = await import("../gateway-client");
 			const client = await gatewayClientPool.getClient(userId, gatewayToken, clawdConfig.gatewayUrl);
+			const agentId = clawdConfig.defaultAgentId || "main";
+			// Format session key with agent: agent:{agentId}:mote:voice:{sessionId}
+			const voiceSessionKey = `agent:${agentId}:mote:voice:${sessionId}`;
 			const aiResponseMessage = await client.sendChatMessageAndWait({
-				sessionKey: sessionId,
+				sessionKey: voiceSessionKey,
 				message: transcription,
 				idempotencyKey: randomUUID(),
 			});

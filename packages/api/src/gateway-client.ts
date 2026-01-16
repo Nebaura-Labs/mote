@@ -265,11 +265,16 @@ export class GatewayClient {
             if (message.ok) {
               pending.resolve(message.payload);
             } else {
-              pending.reject(new Error(message.error || "Request failed"));
+              const errorMsg = typeof message.error === 'string'
+                ? message.error
+                : JSON.stringify(message.error) || "Request failed";
+              console.error(`[gateway-client] Request failed:`, message.error);
+              pending.reject(new Error(errorMsg));
             }
           }
         } else if (message.type === "event") {
           // Event notification
+          console.log(`[gateway-client] Raw event received - type: ${message.event}, payload.runId: ${(message.payload as any)?.runId}, seq: ${(message.payload as any)?.seq}`);
           const handlers = this.eventHandlers.get(message.event);
           if (handlers) {
             handlers.forEach((handler) => handler(message.payload));
@@ -394,15 +399,12 @@ export class GatewayClient {
 
       const handler = (payload: any) => {
         try {
-          console.log(`[gateway-client] Received event:`, JSON.stringify(payload, null, 2));
-
           // Filter events for this runId
           if (payload.runId !== runId) {
-            console.log(`[gateway-client] Ignoring event for different runId: ${payload.runId}`);
             return;
           }
 
-          console.log(`[gateway-client] Processing event for runId: ${runId}`);
+          console.log(`[gateway-client] Received event seq ${payload.seq}:`, JSON.stringify(payload, null, 2));
 
           // Handle different event states
           if (payload.state === "delta" && payload.message?.content) {
