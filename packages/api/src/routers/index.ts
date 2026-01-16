@@ -4,6 +4,7 @@ import { protectedProcedure, publicProcedure } from "../index";
 import { gatewayRouter } from "./gateway";
 import { clawdRouter } from "./clawd";
 import { autoSetupClawdRouter } from "./auto-setup-clawd";
+import { voiceRouter } from "./voice";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -18,6 +19,7 @@ export const appRouter = {
   gateway: gatewayRouter,
   clawd: clawdRouter,
   autoSetupClawd: autoSetupClawdRouter,
+  voice: voiceRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;
