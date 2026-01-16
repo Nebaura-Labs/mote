@@ -5,7 +5,7 @@
  * Shows connection state with color-coded indicator and status text.
  */
 
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, useColorScheme } from 'react-native';
 import { useBridge } from '@/contexts/BridgeContext';
 import {
   getStatusMessage,
@@ -99,6 +99,8 @@ function StatusDot({ status }: { status: ConnectionStatus }) {
  */
 export function BridgeStatusBadge() {
   const { status } = useBridge();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const getBadgeColor = () => {
     if (isConnectedStatus(status)) return '#10b981'; // green
@@ -108,9 +110,12 @@ export function BridgeStatusBadge() {
   };
 
   return (
-    <View className="flex-row items-center gap-2 rounded-full bg-gray-100 px-3 py-1.5">
+    <View
+      className="flex-row items-center gap-2 rounded-full px-3 py-1.5"
+      style={{ backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6' }}
+    >
       <View className="h-2 w-2 rounded-full" style={{ backgroundColor: getBadgeColor() }} />
-      <Text className="text-xs font-medium" style={{ color: '#111827' }}>
+      <Text className="text-xs font-medium" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
         {getStatusMessage(status)}
       </Text>
     </View>
@@ -122,11 +127,20 @@ export function BridgeStatusBadge() {
  */
 export function BridgeStatusCard() {
   const { status, error, connect, disconnect } = useBridge();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   return (
-    <View className="rounded-xl bg-white border border-gray-200 p-4">
+    <View
+      className="rounded-xl p-4"
+      style={{
+        backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+        borderWidth: 1,
+        borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+      }}
+    >
       <View className="mb-3 flex-row items-center justify-between">
-        <Text className="text-base font-semibold" style={{ color: '#111827' }}>
+        <Text className="text-base font-semibold" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
           Gateway Connection
         </Text>
         <BridgeStatusBadge />
@@ -134,7 +148,10 @@ export function BridgeStatusCard() {
 
       {/* Error Message */}
       {error && (
-        <View className="mb-3 rounded-md bg-red-50 p-3">
+        <View
+          className="mb-3 rounded-md p-3"
+          style={{ backgroundColor: isDark ? '#3a1a1a' : '#fef2f2' }}
+        >
           <Text className="text-sm font-medium" style={{ color: '#ef4444' }}>
             {error.code}
           </Text>

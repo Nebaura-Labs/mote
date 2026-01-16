@@ -1,4 +1,4 @@
-package studio.nebaura.mote
+package com.mote
 
 import android.os.Build
 import android.os.Bundle

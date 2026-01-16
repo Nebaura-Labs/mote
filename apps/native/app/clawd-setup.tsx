@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, useColorScheme } from 'react-native';
 import { router } from 'expo-router';
 import { Button, TextField, Card } from 'heroui-native';
 import { ScreenWrapper } from '@/components/ui/screen-wrapper';
@@ -23,6 +23,9 @@ const styles = StyleSheet.create({
 });
 
 export default function ClawdSetup() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   const [gatewayUrl, setGatewayUrl] = useState('http://localhost:18789');
   const [token, setToken] = useState('');
   const [agentId, setAgentId] = useState('main');
@@ -162,21 +165,21 @@ export default function ClawdSetup() {
         <View className="gap-6">
           {/* Header */}
           <View className="gap-2">
-            <Text variant="h2" style={{ color: '#111827' }}>
+            <Text variant="h2" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
               Gateway Setup
             </Text>
-            <Text variant="p" style={{ color: '#6B7280' }}>
+            <Text variant="p" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
               Configure your clawd.bot Gateway connection to start chatting.
             </Text>
           </View>
 
           {/* Configuration Form */}
-          <Card className="bg-white border border-gray-200 rounded-xl">
+          <Card style={{ backgroundColor: isDark ? '#2a2a2a' : '#ffffff', borderColor: isDark ? '#3a3a3a' : '#e5e7eb', borderWidth: 1, borderRadius: 12 }}>
             <Card.Body className="p-4">
               <View className="gap-4">
                 {/* Gateway URL */}
                 <View>
-                  <Text variant="small" className="mb-2" style={{ color: '#6B7280' }}>
+                  <Text variant="small" className="mb-2" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                     Gateway URL
                   </Text>
                   <TextField>
@@ -188,17 +191,25 @@ export default function ClawdSetup() {
                       autoCorrect={false}
                       keyboardType="url"
                       editable={!isSaving}
-                      className="bg-white border border-gray-200 rounded-xl px-4 h-14 text-gray-900"
+                      style={{
+                        backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
+                        borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+                        borderWidth: 1,
+                        borderRadius: 12,
+                        paddingHorizontal: 16,
+                        height: 56,
+                        color: isDark ? '#e5e5e5' : '#111827',
+                      }}
                     />
                   </TextField>
-                  <Text variant="small" className="mt-1" style={{ color: '#9CA3AF' }}>
+                  <Text variant="small" className="mt-1" style={{ color: isDark ? '#6B7280' : '#9CA3AF' }}>
                     Your Gateway HTTP endpoint URL
                   </Text>
                 </View>
 
                 {/* Gateway Token */}
                 <View>
-                  <Text variant="small" className="mb-2" style={{ color: '#6B7280' }}>
+                  <Text variant="small" className="mb-2" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                     Gateway Token
                   </Text>
                   <TextField>
@@ -210,17 +221,25 @@ export default function ClawdSetup() {
                       autoCorrect={false}
                       secureTextEntry
                       editable={!isSaving}
-                      className="bg-white border border-gray-200 rounded-xl px-4 h-14 text-gray-900"
+                      style={{
+                        backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
+                        borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+                        borderWidth: 1,
+                        borderRadius: 12,
+                        paddingHorizontal: 16,
+                        height: 56,
+                        color: isDark ? '#e5e5e5' : '#111827',
+                      }}
                     />
                   </TextField>
-                  <Text variant="small" className="mt-1" style={{ color: '#9CA3AF' }}>
+                  <Text variant="small" className="mt-1" style={{ color: isDark ? '#6B7280' : '#9CA3AF' }}>
                     Your Gateway authentication token (if required)
                   </Text>
                 </View>
 
                 {/* Agent ID */}
                 <View>
-                  <Text variant="small" className="mb-2" style={{ color: '#6B7280' }}>
+                  <Text variant="small" className="mb-2" style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}>
                     Default Agent ID
                   </Text>
                   <TextField>
@@ -231,10 +250,18 @@ export default function ClawdSetup() {
                       autoCapitalize="none"
                       autoCorrect={false}
                       editable={!isSaving}
-                      className="bg-white border border-gray-200 rounded-xl px-4 h-14 text-gray-900"
+                      style={{
+                        backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
+                        borderColor: isDark ? '#3a3a3a' : '#e5e7eb',
+                        borderWidth: 1,
+                        borderRadius: 12,
+                        paddingHorizontal: 16,
+                        height: 56,
+                        color: isDark ? '#e5e5e5' : '#111827',
+                      }}
                     />
                   </TextField>
-                  <Text variant="small" className="mt-1" style={{ color: '#9CA3AF' }}>
+                  <Text variant="small" className="mt-1" style={{ color: isDark ? '#6B7280' : '#9CA3AF' }}>
                     Which agent to use (usually "main")
                   </Text>
                 </View>
@@ -280,11 +307,11 @@ export default function ClawdSetup() {
           </Card>
 
           {/* Info Card */}
-          <View className="rounded-lg bg-white/60 p-4">
-            <Text variant="h4" className="mb-2" style={{ color: '#111827' }}>
+          <View style={{ borderRadius: 8, backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.6)', padding: 16 }}>
+            <Text variant="h4" className="mb-2" style={{ color: isDark ? '#e5e5e5' : '#111827' }}>
               About Gateway Connection
             </Text>
-            <Text variant="small" style={{ color: '#6B7280', lineHeight: 20 }}>
+            <Text variant="small" style={{ color: isDark ? '#9CA3AF' : '#6B7280', lineHeight: 20 }}>
               The Gateway URL is the HTTP endpoint for your clawd.bot Gateway.{'\n\n'}
               Default: http://localhost:18789{'\n\n'}
               If you set CLAWDBOT_GATEWAY_TOKEN in your Gateway config, enter it above. Otherwise, leave it empty.{'\n\n'}

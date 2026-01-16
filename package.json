@@ -51,5 +51,22 @@
     "typescript": "catalog:",
     "ultracite": "7.0.11"
   },
-  "packageManager": "bun@1.3.3"
+  "packageManager": "bun@1.3.3",
+  "version": "1.0.0",
+  "description": "**Mote - An open-source ESP32-S3 voice companion for Clawd**",
+  "main": "roku-api.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nebaura-Labs/mote.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nebaura-Labs/mote/issues"
+  },
+  "homepage": "https://github.com/Nebaura-Labs/mote#readme"
 }

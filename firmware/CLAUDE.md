@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is the firmware for the **Nebaura Labs Mote**, a compact open-source voice assistant device featuring an animated face display on a 2" IPS LCD. The device is built around an ESP32-S3 microcontroller and acts as a hardware terminal for a personal AI companion.
 
 **Key Hardware Components:**
-- **MCU:** ESP32-S3 N16R8 DevKit
-- **Display:** Waveshare 2" IPS LCD (240×320, ST7789)
+- **MCU:** ESP32-S3 N8R8 DevKit (8MB Flash, 8MB PSRAM)
+- **Display:** Waveshare 2" IPS LCD (240×320, ST7789V)
 - **Audio Input:** INMP441 I2S MEMS microphone
 - **Audio Output:** MAX98357A I2S 3W Class D amplifier + speaker
 - **Power:** 3.7V 2000mAh LiPo battery with TP4056 USB-C charger
@@ -56,39 +56,44 @@ The project is configured for `esp32-s3-devkitc-1` in `platformio.ini`. The ESP3
 
 ### Display (SPI)
 ```cpp
-#define MOTE_TFT_MOSI  23
-#define MOTE_TFT_SCLK  18
-#define MOTE_TFT_CS    5
-#define MOTE_TFT_DC    4
-#define MOTE_TFT_RST   2
-#define MOTE_TFT_BL    17
+#define TFT_MOSI  11  // Green wire -> Display DIN
+#define TFT_SCLK  13  // Orange wire -> Display CLK
+#define TFT_CS    10  // Yellow wire -> Display CS
+#define TFT_DC    9   // Blue wire -> Display DC
+#define TFT_RST   14  // Brown wire -> Display RST
+#define TFT_BL    8   // White wire -> Display BL (backlight)
 ```
+
+**Important:** This display requires hardware SPI using the HSPI bus:
+```cpp
+spi = new SPIClass(HSPI);
+spi->begin(TFT_SCLK, -1, TFT_MOSI, -1);
+spi->setFrequency(40000000); // 40MHz
+```
+
+See `docs/display.md` for complete usage guide.
 
 ### Microphone (I2S Input)
 ```cpp
-#define MOTE_MIC_SCK   14
-#define MOTE_MIC_WS    32
-#define MOTE_MIC_SD    15
+// NOTE: GPIO 33-37 are reserved for PSRAM on ESP32-S3 with 8MB PSRAM!
+#define I2S_MIC_WS   39  // Yellow wire
+#define I2S_MIC_SCK  40  // Green wire
+#define I2S_MIC_SD   41  // Blue wire
 ```
 
 ### Amplifier (I2S Output)
 ```cpp
-#define MOTE_AMP_BCLK  26
-#define MOTE_AMP_LRC   25
-#define MOTE_AMP_DIN   22
-```
-
-### Buttons (Active LOW, use INPUT_PULLUP)
-```cpp
-#define MOTE_BTN_VOL_UP    33
-#define MOTE_BTN_VOL_DOWN  27
-#define MOTE_BTN_MUTE      12
+#define I2S_AMP_BCLK  16  // Orange wire
+#define I2S_AMP_LRC   17  // Purple wire
+#define I2S_AMP_DIN   18  // White wire
 ```
 
 ### Battery Monitor
 ```cpp
-#define MOTE_BATTERY_ADC   34  // Connected via 100kΩ/100kΩ voltage divider
+#define BATTERY_ADC_PIN  2  // Purple wire from voltage divider
 ```
+
+Connected via 100kΩ/100kΩ voltage divider (divides 4.2V max to 2.1V safe for ADC).
 
 ## Architecture
 
@@ -141,6 +146,11 @@ void adjustVolume(int16_t* samples, size_t count) {
 
 ## Display System
 
+**Resolution:** 320×240 (Landscape mode)
+**Controller:** ST7789V
+**SPI Speed:** 40MHz (hardware HSPI)
+**Color Format:** RGB565 (16-bit)
+
 ### Face Animation
 
 The Mote's primary UI is an animated face on the 2" LCD. The face should:
@@ -152,11 +162,24 @@ The Mote's primary UI is an animated face on the 2" LCD. The face should:
   - Red tint: <25% battery
   - Pulsing: Charging
 
-### Display Libraries
+### Display Functions
 
-Use either:
-- **TFT_eSPI** - Popular, well-documented
-- **LovyanGFX** - More performant for animations
+The firmware includes custom lightweight display functions:
+- `fillScreen(color)` - Fill entire screen with a color
+- `fillRect(x, y, w, h, color)` - Draw filled rectangle
+- `drawPixel(x, y, color)` - Draw single pixel
+- `setWindow(x0, y0, x1, y1)` - Set drawing window
+- `initDisplay()` - Initialize ST7789V
+
+See `docs/display.md` for complete API and examples.
+
+### Color Definitions
+
+Pre-defined RGB565 colors available:
+```cpp
+COLOR_BLACK, COLOR_WHITE, COLOR_RED, COLOR_GREEN,
+COLOR_BLUE, COLOR_YELLOW, COLOR_CYAN, COLOR_MAGENTA
+```
 
 ## Battery Management
 
@@ -216,8 +239,16 @@ Key libraries to include in `platformio.ini`:
 
 ## Hardware Constraints
 
-- **Flash:** ESP32-S3 has 16MB flash (N16R8)
+- **Flash:** ESP32-S3 has 8MB flash (N8R8)
 - **RAM:** 8MB PSRAM available
-- **Display:** 240×320 pixels, 16-bit color
+- **Display:** 320×240 pixels (landscape), 16-bit RGB565 color, 40MHz SPI
 - **Battery:** Monitor and warn user below 10% to prevent damage
 - **Speaker:** 4Ω 3W - limit volume to prevent distortion
+
+## Documentation
+
+Detailed component documentation available in `docs/`:
+- `docs/display.md` - Display API, SPI configuration, face animation guide
+- `docs/audio.md` - I2S microphone and speaker setup
+- `docs/battery.md` - Battery monitoring and power management
+- `docs/buttons.md` - Button handling and debouncing

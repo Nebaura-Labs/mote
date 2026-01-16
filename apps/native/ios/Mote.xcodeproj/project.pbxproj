@@ -8,12 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		21A594DE571336C3FE0C9948 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60EEA80481F2B4057E2E0912 /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		6F27201B0B3D9D75FADF3D04 /* libPods-Mote.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E075E8070D2F26D25AA0E7E3 /* libPods-Mote.a */; };
-		9A1234567890ABCD12345678 /* ShellExecutorModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1234567890ABCD87654321 /* ShellExecutorModule.swift */; };
+		9A97312792EE88E929A6BDB2 /* libPods-Mote.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5B237F63D7215B1F68FF9A3 /* libPods-Mote.a */; };
+		A2A64D1FCC6064D3B107257C /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAC9D73940E93E8C1FA9119E /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		E33F4389109E27421F08A34C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AE49FFDC8D90675D43443982 /* PrivacyInfo.xcprivacy */; };
+		D98F488D8292A6A3D69AA177 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = EEA29137DEC623DD0FB8B1D0 /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -21,15 +20,14 @@
 		13B07F961A680F5B00A75B9A /* Mote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mote.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Mote/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Mote/Info.plist; sourceTree = "<group>"; };
-		35A70A0741DF0D63A3CA572C /* Pods-Mote.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mote.release.xcconfig"; path = "Target Support Files/Pods-Mote/Pods-Mote.release.xcconfig"; sourceTree = "<group>"; };
-		38F423FC66A4A517233E438C /* Pods-Mote.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mote.debug.xcconfig"; path = "Target Support Files/Pods-Mote/Pods-Mote.debug.xcconfig"; sourceTree = "<group>"; };
-		60EEA80481F2B4057E2E0912 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Mote/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		9A1234567890ABCD87654321 /* ShellExecutorModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShellExecutorModule.swift; path = Mote/ShellExecutorModule.swift; sourceTree = "<group>"; };
+		13C8E779AFEEA46FC61E2C1B /* Pods-Mote.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mote.release.xcconfig"; path = "Target Support Files/Pods-Mote/Pods-Mote.release.xcconfig"; sourceTree = "<group>"; };
+		6EE5673457AE43ED67594F4D /* Pods-Mote.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mote.debug.xcconfig"; path = "Target Support Files/Pods-Mote/Pods-Mote.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Mote/SplashScreen.storyboard; sourceTree = "<group>"; };
-		AE49FFDC8D90675D43443982 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Mote/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AAC9D73940E93E8C1FA9119E /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Mote/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		B5B237F63D7215B1F68FF9A3 /* libPods-Mote.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Mote.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E075E8070D2F26D25AA0E7E3 /* libPods-Mote.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Mote.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		EEA29137DEC623DD0FB8B1D0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Mote/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Mote/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Mote-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Mote-Bridging-Header.h"; path = "Mote/Mote-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -39,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6F27201B0B3D9D75FADF3D04 /* libPods-Mote.a in Frameworks */,
+				9A97312792EE88E929A6BDB2 /* libPods-Mote.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -50,40 +48,32 @@
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
-				9A1234567890ABCD87654321 /* ShellExecutorModule.swift */,
 				F11748442D0722820044C1D9 /* Mote-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				AE49FFDC8D90675D43443982 /* PrivacyInfo.xcprivacy */,
+				EEA29137DEC623DD0FB8B1D0 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Mote;
 			sourceTree = "<group>";
 		};
-		1DF7E4ABB139000D85AF4E25 /* Mote */ = {
+		1860D0EB9EF4E2FB6E00D566 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				60EEA80481F2B4057E2E0912 /* ExpoModulesProvider.swift */,
+				6EE5673457AE43ED67594F4D /* Pods-Mote.debug.xcconfig */,
+				13C8E779AFEEA46FC61E2C1B /* Pods-Mote.release.xcconfig */,
 			);
-			name = Mote;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				E075E8070D2F26D25AA0E7E3 /* libPods-Mote.a */,
+				B5B237F63D7215B1F68FF9A3 /* libPods-Mote.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		5A1947A9A742FD8DFCD2DF35 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				1DF7E4ABB139000D85AF4E25 /* Mote */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -100,8 +90,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				83D53C4EC79CBB948C47D067 /* Pods */,
-				5A1947A9A742FD8DFCD2DF35 /* ExpoModulesProviders */,
+				1860D0EB9EF4E2FB6E00D566 /* Pods */,
+				E56088F9B42C9E803D9C68B6 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -116,16 +106,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		83D53C4EC79CBB948C47D067 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				38F423FC66A4A517233E438C /* Pods-Mote.debug.xcconfig */,
-				35A70A0741DF0D63A3CA572C /* Pods-Mote.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -133,6 +113,22 @@
 			);
 			name = Supporting;
 			path = Mote/Supporting;
+			sourceTree = "<group>";
+		};
+		E56088F9B42C9E803D9C68B6 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				F1158536B37593EFC6D10052 /* Mote */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		F1158536B37593EFC6D10052 /* Mote */ = {
+			isa = PBXGroup;
+			children = (
+				AAC9D73940E93E8C1FA9119E /* ExpoModulesProvider.swift */,
+			);
+			name = Mote;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -143,13 +139,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Mote" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				80AEA72FB3C660E5F3DD7EEE /* [Expo] Configure project */,
+				75688F76563CF2D315E10113 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				660ED3DA0C6801F3A8894B84 /* [CP] Embed Pods Frameworks */,
+				6E7CF31A880AE698F4B61851 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -199,7 +195,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				E33F4389109E27421F08A34C /* PrivacyInfo.xcprivacy in Resources */,
+				D98F488D8292A6A3D69AA177 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,7 +241,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		660ED3DA0C6801F3A8894B84 /* [CP] Embed Pods Frameworks */ = {
+		6E7CF31A880AE698F4B61851 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -266,6 +262,29 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Mote/Pods-Mote-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		75688F76563CF2D315E10113 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-Mote/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-Mote/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Mote/expo-configure-project.sh\"\n";
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -295,30 +314,6 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Mote/Pods-Mote-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		80AEA72FB3C660E5F3DD7EEE /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/Mote/Mote.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-Mote/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-Mote/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Mote/expo-configure-project.sh\"\n";
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -327,8 +322,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				9A1234567890ABCD12345678 /* ShellExecutorModule.swift in Sources */,
-				21A594DE571336C3FE0C9948 /* ExpoModulesProvider.swift in Sources */,
+				A2A64D1FCC6064D3B107257C /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -337,12 +331,12 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 38F423FC66A4A517233E438C /* Pods-Mote.debug.xcconfig */;
+			baseConfigurationReference = 6EE5673457AE43ED67594F4D /* Pods-Mote.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Mote/Mote.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TGFDAA44B7;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -361,24 +355,23 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = studio.nebaura.mote;
+				PRODUCT_BUNDLE_IDENTIFIER = org.name.Mote;
 				PRODUCT_NAME = Mote;
 				SWIFT_OBJC_BRIDGING_HEADER = "Mote/Mote-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 35A70A0741DF0D63A3CA572C /* Pods-Mote.release.xcconfig */;
+			baseConfigurationReference = 13C8E779AFEEA46FC61E2C1B /* Pods-Mote.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Mote/Mote.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TGFDAA44B7;
 				INFOPLIST_FILE = Mote/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -392,11 +385,10 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = studio.nebaura.mote;
+				PRODUCT_BUNDLE_IDENTIFIER = org.name.Mote;
 				PRODUCT_NAME = Mote;
 				SWIFT_OBJC_BRIDGING_HEADER = "Mote/Mote-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
