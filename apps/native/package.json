@@ -26,6 +26,8 @@
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "expo": "^54.0.23",
+    "expo-audio": "^1.1.1",
+    "expo-av": "~16.0.8",
     "expo-constants": "~18.0.10",
     "expo-document-picker": "~12.0.2",
     "expo-file-system": "^19.0.21",
