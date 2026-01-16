@@ -9,8 +9,8 @@ import { View, Text, ScrollView, Alert, FlatList, StyleSheet, useColorScheme, Te
 import { Button, Card, Chip } from 'heroui-native';
 import { ScreenWrapper } from '@/components/ui/screen-wrapper';
 import { useMoteHardware } from '@/contexts/MoteHardwareContext';
+import { useAuth } from '@/contexts/auth-context';
 import { useState, useEffect } from 'react';
-import { getSSHConfig } from '@/utils/bridge-storage';
 
 const getStyles = (isDark: boolean) => StyleSheet.create({
   card: {
@@ -56,6 +56,9 @@ export default function HardwareScreen() {
   const isDark = colorScheme === 'dark';
   const styles = getStyles(isDark);
 
+  // Get auth session for automatic token
+  const { session } = useAuth();
+
   const {
     isConnected,
     isScanning,
@@ -73,58 +76,28 @@ export default function HardwareScreen() {
   // Configuration form state
   const [wifiSsid, setWifiSsid] = useState('');
   const [wifiPassword, setWifiPassword] = useState('');
-  const [serverUrl, setServerUrl] = useState('');
-  const [serverPort, setServerPort] = useState('443');
-  const [gatewayToken, setGatewayToken] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /**
-   * Load stored Gateway configuration on mount
-   */
-  useEffect(() => {
-    const loadStoredConfig = async () => {
-      console.log('[Hardware] Loading stored SSH config...');
-      const sshConfig = await getSSHConfig();
-      console.log('[Hardware] SSH config:', sshConfig);
-      if (sshConfig) {
-        // Use the actual remote server address (not localhost)
-        // Mote device needs to connect directly to the server
-        const url = `wss://${sshConfig.host}`;
-        console.log('[Hardware] Auto-populating Gateway URL:', url);
-        setServerUrl(url);
-        setServerPort('18789'); // Your Gateway port
-      } else {
-        console.log('[Hardware] No SSH config found');
-      }
-    };
-    loadStoredConfig();
-  }, []);
+  // Get session token for device authentication
+  const sessionToken = (session as any)?.session?.token || (session as any)?.token || null;
+
+  // Web backend URL - Mote connects here for voice (backend handles Gateway internally)
+  const webBackendUrl = process.env.EXPO_PUBLIC_SERVER_URL || '';
+  const parsedUrl = webBackendUrl ? new URL(webBackendUrl) : null;
+  const webBackendHost = parsedUrl?.hostname || '';
+  const webBackendPort = parsedUrl?.port ? parseInt(parsedUrl.port, 10) : (parsedUrl?.protocol === 'https:' ? 443 : 80);
 
   /**
-   * Prefill form from Mote device status when connected via BLE
-   * This populates fields with the device's current configuration
-   * Always overwrites form values with device config when connected
+   * Prefill WiFi SSID from Mote device status when connected via BLE
    */
   useEffect(() => {
     if (isConnected && deviceStatus) {
       console.log('[Hardware] Prefilling form from device status:', deviceStatus);
 
-      // Always prefill WiFi SSID from device when available
+      // Prefill WiFi SSID from device when available
       if (deviceStatus.wifiSsid) {
         console.log('[Hardware] Prefilling WiFi SSID:', deviceStatus.wifiSsid);
         setWifiSsid(deviceStatus.wifiSsid);
-      }
-
-      // Always prefill Gateway server from device when available
-      if (deviceStatus.gatewayServer) {
-        console.log('[Hardware] Prefilling Gateway server:', deviceStatus.gatewayServer);
-        setServerUrl(deviceStatus.gatewayServer);
-      }
-
-      // Always prefill Gateway port from device when available
-      if (deviceStatus.gatewayPort) {
-        console.log('[Hardware] Prefilling Gateway port:', deviceStatus.gatewayPort);
-        setServerPort(String(deviceStatus.gatewayPort));
       }
     }
   }, [isConnected, deviceStatus]);
@@ -155,19 +128,13 @@ export default function HardwareScreen() {
       return;
     }
 
-    if (!serverUrl.trim()) {
-      Alert.alert('Validation Error', 'Please enter the Gateway server URL');
+    if (!webBackendHost) {
+      Alert.alert('Configuration Error', 'Web backend URL not configured. Check EXPO_PUBLIC_SERVER_URL.');
       return;
     }
 
-    if (!gatewayToken.trim()) {
-      Alert.alert('Validation Error', 'Please enter your Gateway token');
-      return;
-    }
-
-    const port = parseInt(serverPort, 10);
-    if (isNaN(port) || port < 1 || port > 65535) {
-      Alert.alert('Validation Error', 'Please enter a valid port number (1-65535)');
+    if (!sessionToken) {
+      Alert.alert('Authentication Error', 'No session token available. Please log in again.');
       return;
     }
 
@@ -178,14 +145,14 @@ export default function HardwareScreen() {
       await sendConfig({
         wifiSsid: wifiSsid.trim(),
         wifiPassword: wifiPassword.trim(),
-        websocketServer: serverUrl.trim(),
-        websocketPort: port,
-        gatewayToken: gatewayToken.trim(),
+        websocketServer: webBackendHost,
+        websocketPort: webBackendPort,
+        gatewayToken: sessionToken, // Use session token automatically
       });
 
       Alert.alert(
         'Configuration Sent',
-        'Your Mote device will now connect to your WiFi network and Gateway server. This may take a few moments.',
+        'Your Mote device will now connect to your WiFi network and the Mote backend. This may take a few moments.',
         [
           {
             text: 'OK',
@@ -391,51 +358,49 @@ export default function HardwareScreen() {
                 />
               </View>
 
+              {/* Backend Server (auto-configured) */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>Gateway Server URL</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="wss://gateway.example.com"
-                  placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-                  value={serverUrl}
-                  onChangeText={setServerUrl}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="url"
-                />
+                <Text style={styles.label}>Mote Backend Server</Text>
+                <View style={{
+                  padding: 12,
+                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                  borderRadius: 8,
+                }}>
+                  <Text style={{ fontSize: 14, color: '#3b82f6' }}>
+                    {webBackendHost ? `wss://${webBackendHost}:${webBackendPort}` : 'Not configured'}
+                  </Text>
+                </View>
               </View>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Server Port</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="3000"
-                  placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-                  value={serverPort}
-                  onChangeText={setServerPort}
-                  keyboardType="number-pad"
-                />
-              </View>
+              {/* Auth status */}
+              {sessionToken && webBackendHost && (
+                <View style={{
+                  padding: 12,
+                  backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                  borderRadius: 8,
+                }}>
+                  <Text style={{ fontSize: 12, color: '#10b981' }}>
+                    ✓ Ready to configure (auth token + backend server)
+                  </Text>
+                </View>
+              )}
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Gateway Token</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your Gateway authentication token"
-                  placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-                  value={gatewayToken}
-                  onChangeText={setGatewayToken}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
+              {!sessionToken && (
+                <View style={{
+                  padding: 12,
+                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                  borderRadius: 8,
+                }}>
+                  <Text style={{ fontSize: 12, color: '#ef4444' }}>
+                    ⚠ No authentication token. Please log in again.
+                  </Text>
+                </View>
+              )}
 
               <Button
                 onPress={handleSendConfig}
-                color="primary"
                 isLoading={isSubmitting}
-                isDisabled={!wifiSsid.trim() || !serverUrl.trim() || !gatewayToken.trim()}
+                isDisabled={!wifiSsid.trim() || !webBackendHost || !sessionToken}
               >
                 Save Configuration
               </Button>
