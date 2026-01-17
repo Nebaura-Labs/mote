@@ -12,6 +12,7 @@ static uint16_t softwareGain = 300;  // 3x boost - ElevenLabs output is quiet
 
 // Audio playback state
 static volatile bool audioPlaying = false;
+static volatile bool speakerEnabled = false;
 
 // ============================================================================
 // Ring Buffer for Buffered Audio Playback
@@ -87,9 +88,11 @@ static void audioPlaybackTask(void* parameter) {
             size_t buffered = getBufferedSamples();
             if (buffered >= AUDIO_START_THRESHOLD && !streamFinished) {
                 Serial.printf("[Audio] Starting playback, buffered: %d samples\n", buffered);
+                enableSpeaker();  // Turn on speaker before playing
                 bufferPlaying = true;
             } else if (streamFinished && buffered > 0) {
                 // Stream is done but we still have data to play
+                enableSpeaker();  // Turn on speaker before playing
                 bufferPlaying = true;
             } else {
                 vTaskDelay(pdMS_TO_TICKS(10));
@@ -102,12 +105,12 @@ static void audioPlaybackTask(void* parameter) {
         size_t available = getBufferedSamples();
         if (available == 0) {
             if (streamFinished) {
-                // Done playing - clear speaker buffer
+                // Done playing - clear speaker buffer and disable
                 Serial.println("[Audio] Buffered playback complete");
                 bufferPlaying = false;
                 streamFinished = false;
                 underrunCount = 0;
-                i2s_zero_dma_buffer(I2S_NUM_1);  // Clear speaker buffer
+                disableSpeaker();  // Turn off speaker to prevent noise
                 Serial.println("[Audio] Playback finished, microphone will be restarted");
             } else {
                 // Buffer underrun - wait longer for more data (50ms instead of 5ms)
@@ -124,7 +127,7 @@ static void audioPlaybackTask(void* parameter) {
                     bufferPlaying = false;
                     streamFinished = false;
                     underrunCount = 0;
-                    i2s_zero_dma_buffer(I2S_NUM_1);
+                    disableSpeaker();  // Turn off speaker to prevent noise
                 }
             }
             continue;
@@ -279,7 +282,37 @@ static bool setupAmplifier() {
     i2s_zero_dma_buffer(I2S_NUM_1);
 
     Serial.println("[Audio] Amplifier initialized successfully");
+
+    // Start with speaker disabled to prevent noise
+    i2s_stop(I2S_NUM_1);
+    speakerEnabled = false;
+    Serial.println("[Audio] Speaker initially disabled");
+
     return true;
+}
+
+/**
+ * Enable speaker I2S output (call before playing audio)
+ */
+void enableSpeaker() {
+    if (!speakerEnabled) {
+        i2s_start(I2S_NUM_1);
+        i2s_zero_dma_buffer(I2S_NUM_1);  // Clear any garbage
+        speakerEnabled = true;
+        Serial.println("[Audio] Speaker enabled");
+    }
+}
+
+/**
+ * Disable speaker I2S output (call after playback complete)
+ */
+void disableSpeaker() {
+    if (speakerEnabled) {
+        i2s_zero_dma_buffer(I2S_NUM_1);  // Clear buffer first
+        i2s_stop(I2S_NUM_1);
+        speakerEnabled = false;
+        Serial.println("[Audio] Speaker disabled");
+    }
 }
 
 bool setupAudio() {
@@ -412,7 +445,7 @@ void clearAudioBuffer() {
         streamFinished = false;
         xSemaphoreGive(bufferMutex);
     }
-    i2s_zero_dma_buffer(I2S_NUM_1);
+    disableSpeaker();  // Turn off speaker to stop any noise
     // Also clear microphone buffer to ensure fresh start
     i2s_zero_dma_buffer(I2S_NUM_0);
     Serial.println("[Audio] Audio buffer cleared");

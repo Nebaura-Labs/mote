@@ -125,4 +125,16 @@ bool isAudioPlaying();
  */
 void restartMicrophone();
 
+/**
+ * Enable speaker I2S output (called automatically before playback)
+ * Call this manually if you need to pre-enable for immediate playback
+ */
+void enableSpeaker();
+
+/**
+ * Disable speaker I2S output (called automatically after playback)
+ * Prevents noise when no audio is playing
+ */
+void disableSpeaker();
+
 #endif // AUDIO_H
