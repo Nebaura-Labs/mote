@@ -415,6 +415,7 @@ function handleTranscript(
     sendMessage(session.ws, { type: "voice.listening" });
   } else if (session.wakeWordDetected && data.isFinal) {
     // Capture command after wake word is detected
+    // IMPORTANT: Append to command buffer, don't replace - speech may span multiple transcripts
     const normalizedFinal = text.replace(/[.,!?;:'"]/g, "");
     const wakeWord = session.voiceConfig.wakeWord;
 
@@ -423,16 +424,21 @@ function handleTranscript(
       const idx = normalizedFinal.indexOf(wakeWord);
       const commandPart = normalizedFinal.substring(idx + wakeWord.length).trim();
       if (commandPart) {
+        // First part of command - set it
         session.commandBuffer = commandPart;
         console.log(`[voice-ws] Command (with wake word): "${commandPart}"`);
       }
     } else {
       // This transcript is AFTER the wake word (doesn't contain it)
-      // This IS the command - capture it directly
+      // APPEND to existing command buffer with space
       const commandPart = normalizedFinal.trim();
       if (commandPart) {
-        session.commandBuffer = commandPart;
-        console.log(`[voice-ws] Command (follow-up): "${commandPart}"`);
+        if (session.commandBuffer) {
+          session.commandBuffer += " " + commandPart;
+        } else {
+          session.commandBuffer = commandPart;
+        }
+        console.log(`[voice-ws] Command (appended): "${session.commandBuffer}"`);
       }
     }
   }
