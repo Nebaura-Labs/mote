@@ -14,7 +14,7 @@
 
 Connect to your personal AI powered by [clawd.bot](https://clawd.bot) through a physical device with an animated face, voice interaction, and tactile controls.
 
-**Live Demo:** Mote connects to your own AI gateway with real-time voice chat using **Deepgram** for speech-to-text and **ElevenLabs** for text-to-speech.
+**Live Demo:** Mote connects to your clawd.bot instance with real-time voice chat using **Deepgram** for speech-to-text and **ElevenLabs** for text-to-speech.
 
 ---
 
@@ -25,7 +25,7 @@ The **Mote** is a voice assistant companion device that brings your personal AI 
 - 🎨 **Animated Face Display** - 2" IPS LCD with expressive character that reacts to conversation
 - 🎤 **Real-time Voice Chat** - Stream audio to the cloud for instant transcription via Deepgram
 - 🔊 **Natural TTS Responses** - High-quality voice synthesis via ElevenLabs with buffered playback
-- 🧠 **AI-Powered Conversations** - Connect to clawd.bot or any AI gateway
+- 🧠 **AI-Powered Conversations** - Connect to your clawd.bot instance
 - 📱 **Mobile App Configuration** - Easy BLE setup via React Native app
 - 🔋 **Battery Powered** - Portable with LiPo battery and USB-C charging
 - 🌐 **WiFi + WebSocket** - Direct connection to your gateway server
@@ -54,7 +54,7 @@ The **Mote** is a voice assistant companion device that brings your personal AI 
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────┐      ┌──────────────────┐      ┌─────────────────────────┐
-│   Mote Device    │      │   Gateway Server │      │   External Services     │
+│   Mote Device    │      │   Gateway Server │      │   clawd.bot + Services  │
 │   (ESP32-S3)     │      │   (apps/web)     │      │                         │
 ├──────────────────┤      ├──────────────────┤      ├─────────────────────────┤
 │ • INMP441 Mic    │─────►│ • WebSocket      │─────►│ • Deepgram (STT)        │
@@ -80,7 +80,7 @@ The **Mote** is a voice assistant companion device that brings your personal AI 
 2. Gateway pipes audio to Deepgram for real-time transcription
 3. On wake word detection, server captures user's command
 4. Voice Activity Detection (VAD) on ESP32 detects end of speech
-5. Transcribed text sent to clawd.bot AI for response
+5. Transcribed text sent to your clawd.bot instance for AI response
 6. Response synthesized via ElevenLabs TTS (pcm_16000 format)
 7. PCM audio streamed back to Mote over WebSocket
 8. Mote plays audio from 60-second PSRAM ring buffer
@@ -197,21 +197,23 @@ To run the full voice chat system, you need API keys from:
 
 | Service | Purpose | Get Key |
 |---------|---------|---------|
+| **clawd.bot** | AI backend for conversations | [clawd.bot](https://clawd.bot) |
 | **Deepgram** | Real-time speech-to-text | [deepgram.com](https://deepgram.com) |
 | **ElevenLabs** | Text-to-speech synthesis | [elevenlabs.io](https://elevenlabs.io) |
-| **clawd.bot** | AI gateway (optional) | [clawd.bot](https://clawd.bot) |
 
 Create a `.env` file in `apps/web/`:
 
 ```bash
 # apps/web/.env
+
+# clawd.bot - Required
+CLAWD_API_KEY=your_clawd_key
+CLAWD_ENDPOINT=https://your-instance.clawd.bot
+
+# Voice services
 DEEPGRAM_API_KEY=your_deepgram_key
 ELEVENLABS_API_KEY=your_elevenlabs_key
 ELEVENLABS_VOICE_ID=your_voice_id  # e.g., "21m00Tcm4TlvDq8ikWAM"
-
-# Optional: clawd.bot integration
-CLAWD_API_KEY=your_clawd_key
-CLAWD_ENDPOINT=https://your-instance.clawd.bot
 ```
 
 ---
