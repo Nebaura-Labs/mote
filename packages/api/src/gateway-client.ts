@@ -33,6 +33,23 @@ interface BridgeEvent {
 type BridgeMessage = BridgeRequest | BridgeResponse | BridgeEvent;
 
 /**
+ * Handler for incoming node.invoke requests
+ */
+export type NodeInvokeHandler = (
+  command: string,
+  params: Record<string, unknown>
+) => Promise<{ ok: boolean; payload?: unknown; error?: string }>;
+
+/**
+ * Mote node commands that can be invoked by clawd
+ */
+export const MOTE_NODE_COMMANDS = [
+  "iot.http",      // Make HTTP request to local device
+  "iot.discover",  // mDNS/SSDP discovery
+  "wifi.scan",     // Scan WiFi networks
+] as const;
+
+/**
  * Gateway client for a specific user
  */
 export class GatewayClient {
@@ -50,10 +67,31 @@ export class GatewayClient {
   private pingInterval: NodeJS.Timeout | null = null;
   private pongReceived = true;
 
+  // Mote node properties
+  private nodeId: string;
+  private nodeInvokeHandler: NodeInvokeHandler | null = null;
+  private isNodeRegistered = false;
+
   constructor(userId: string, token: string, gatewayUrl: string) {
     this.userId = userId;
     this.token = token;
     this.gatewayUrl = gatewayUrl;
+    // Generate unique node ID based on user ID
+    this.nodeId = `mote-${userId.substring(0, 8)}`;
+  }
+
+  /**
+   * Set handler for incoming node.invoke requests from clawd
+   */
+  setNodeInvokeHandler(handler: NodeInvokeHandler): void {
+    this.nodeInvokeHandler = handler;
+  }
+
+  /**
+   * Get the node ID for this Mote instance
+   */
+  getNodeId(): string {
+    return this.nodeId;
   }
 
   /**
@@ -91,6 +129,8 @@ export class GatewayClient {
           this.reconnectAttempts = 0;
           this.setupMessageHandler();
           this.startKeepalive();
+          // Register as Mote node after connecting
+          await this.registerNode();
           resolve();
         } catch (error) {
           reject(error);
@@ -105,6 +145,7 @@ export class GatewayClient {
       this.ws.on("close", () => {
         console.log(`[gateway-client] WebSocket closed for user ${this.userId}`);
         this.isConnected = false;
+        this.isNodeRegistered = false;
         this.handleDisconnect();
       });
     });
@@ -160,6 +201,8 @@ export class GatewayClient {
                 this.reconnectAttempts = 0;
                 this.setupMessageHandler();
                 this.startKeepalive();
+                // Register as Mote node after connecting
+                await this.registerNode();
                 resolve();
               } catch (error) {
                 reject(error);
@@ -169,11 +212,13 @@ export class GatewayClient {
             this.ws.on("error", (error) => {
               console.error(`[gateway-client] WebSocket error for user ${this.userId}:`, error);
               this.isConnected = false;
+              this.isNodeRegistered = false;
             });
 
             this.ws.on("close", () => {
               console.log(`[gateway-client] WebSocket closed for user ${this.userId}`);
               this.isConnected = false;
+              this.isNodeRegistered = false;
               this.handleDisconnect();
             });
           }
@@ -250,6 +295,78 @@ export class GatewayClient {
   }
 
   /**
+   * Register this client as a Mote node with the Gateway
+   * This allows clawd to invoke IoT commands on the ESP32
+   */
+  async registerNode(): Promise<void> {
+    if (this.isNodeRegistered) {
+      console.log(`[gateway-client] Node already registered: ${this.nodeId}`);
+      return;
+    }
+
+    console.log(`[gateway-client] Registering Mote node: ${this.nodeId}`);
+
+    try {
+      const result = await this.request("node.pair.request", {
+        nodeId: this.nodeId,
+        displayName: "Mote",
+        platform: "esp32",
+        version: "1.0.0",
+        deviceFamily: "mote",
+        caps: ["iot"],
+        commands: [...MOTE_NODE_COMMANDS],
+        silent: true, // Don't require manual approval for Mote
+      });
+
+      console.log(`[gateway-client] Node registration result:`, result);
+      this.isNodeRegistered = true;
+    } catch (error) {
+      console.error(`[gateway-client] Failed to register node:`, error);
+      // Don't throw - node registration is optional, voice still works
+    }
+  }
+
+  /**
+   * Send a response to an incoming request
+   */
+  private sendResponse(id: string, ok: boolean, payload?: unknown, error?: string): void {
+    const response: BridgeResponse = {
+      type: "res",
+      id,
+      ok,
+      payload,
+      error,
+    };
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(response) + "\n");
+    }
+  }
+
+  /**
+   * Handle incoming node.invoke request from Gateway
+   */
+  private async handleNodeInvoke(requestId: string, params: Record<string, unknown>): Promise<void> {
+    const command = params.command as string;
+    const invokeParams = (params.params as Record<string, unknown>) || {};
+
+    console.log(`[gateway-client] Received node.invoke: command=${command}, params=`, invokeParams);
+
+    if (!this.nodeInvokeHandler) {
+      console.warn(`[gateway-client] No node invoke handler set, rejecting command: ${command}`);
+      this.sendResponse(requestId, false, undefined, "No handler configured");
+      return;
+    }
+
+    try {
+      const result = await this.nodeInvokeHandler(command, invokeParams);
+      this.sendResponse(requestId, result.ok, result.payload, result.error);
+    } catch (error) {
+      console.error(`[gateway-client] Error handling node.invoke:`, error);
+      this.sendResponse(requestId, false, undefined, String(error));
+    }
+  }
+
+  /**
    * Set up message handler for incoming messages
    */
   private setupMessageHandler(): void {
@@ -257,8 +374,22 @@ export class GatewayClient {
       try {
         const message = JSON.parse(data.toString()) as BridgeMessage;
 
-        if (message.type === "res") {
-          // Response to a request
+        if (message.type === "req") {
+          // Incoming request from Gateway (e.g., node.invoke from clawd)
+          console.log(`[gateway-client] Received request: method=${message.method}`);
+
+          if (message.method === "node.invoke") {
+            // Handle node invoke asynchronously
+            this.handleNodeInvoke(message.id, message.params).catch((err: unknown) => {
+              console.error(`[gateway-client] Error in handleNodeInvoke:`, err);
+            });
+          } else {
+            // Unknown method - respond with error
+            console.warn(`[gateway-client] Unknown incoming method: ${message.method}`);
+            this.sendResponse(message.id, false, undefined, `Unknown method: ${message.method}`);
+          }
+        } else if (message.type === "res") {
+          // Response to a request we sent
           const pending = this.pendingRequests.get(message.id);
           if (pending) {
             this.pendingRequests.delete(message.id);
