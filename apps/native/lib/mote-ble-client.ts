@@ -229,6 +229,31 @@ export class MoteBleClient {
   }
 
   /**
+   * Send volume control to device
+   * @param volume Volume level (0-100)
+   */
+  async sendVolume(volume: number): Promise<void> {
+    if (!this.device || !this.configCharacteristic) {
+      throw new Error('Not connected to device');
+    }
+
+    // Clamp volume to valid range
+    const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)));
+    const volumeJson = JSON.stringify({ volume: clampedVolume });
+
+    console.log('[MoteBLE] Sending volume:', clampedVolume);
+
+    try {
+      const encoded = btoa(volumeJson);
+      await this.configCharacteristic.writeWithResponse(encoded);
+      console.log('[MoteBLE] Volume sent successfully');
+    } catch (error) {
+      console.error('[MoteBLE] Failed to send volume:', error);
+      throw new Error('Failed to send volume to device');
+    }
+  }
+
+  /**
    * Disconnect from device
    */
   disconnect(): void {

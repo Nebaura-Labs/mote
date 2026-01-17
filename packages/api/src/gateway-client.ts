@@ -419,6 +419,9 @@ export class GatewayClient {
             // Response complete - use the final event's complete text
             let finalContent = "";
 
+            console.log(`[gateway-client] Final event payload keys:`, Object.keys(payload));
+            console.log(`[gateway-client] Final event full payload:`, JSON.stringify(payload, null, 2));
+
             // Extract complete text from final event
             if (payload.message?.content) {
               for (const item of payload.message.content) {
@@ -432,8 +435,13 @@ export class GatewayClient {
 
             // Fallback to accumulated deltas if final event has no text
             if (!finalContent && responseContent) {
-              console.log(`[gateway-client] No text in final event, using accumulated deltas`);
+              console.log(`[gateway-client] No text in final event, using accumulated deltas (${responseContent.length} chars)`);
               finalContent = responseContent;
+            }
+
+            if (!finalContent) {
+              console.log(`[gateway-client] WARNING: No response text received from Gateway (no deltas, no final message)`);
+              finalContent = "I received your question but didn't generate a response. Please try again.";
             }
 
             console.log(`[gateway-client] Chat response completed, content: ${finalContent.substring(0, 100)}...`);

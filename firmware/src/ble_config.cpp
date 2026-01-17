@@ -1,4 +1,5 @@
 #include "ble_config.h"
+#include "audio.h"
 #include <WiFi.h>
 #include <Preferences.h>
 
@@ -47,8 +48,29 @@ class ConfigCallbacks: public BLECharacteristicCallbacks {
         if (value.length() > 0) {
             Serial.printf("[BLE] Received config: %s\n", value.c_str());
 
-            // Parse simple JSON manually (format: {"ssid":"...","password":"...","server":"...","port":3000})
+            // Parse simple JSON manually
             String json = String(value.c_str());
+
+            // Check if this is a volume command (format: {"volume":50})
+            int volumeStart = json.indexOf("\"volume\":");
+            if (volumeStart >= 0) {
+                volumeStart += 9;
+                String volumeStr = json.substring(volumeStart);
+                int volumeEnd = volumeStr.indexOf(",");
+                if (volumeEnd == -1) volumeEnd = volumeStr.indexOf("}");
+                if (volumeEnd > 0) {
+                    int volume = volumeStr.substring(0, volumeEnd).toInt();
+                    if (volume >= 0 && volume <= 100) {
+                        setVolume((uint8_t)volume);
+                        Serial.printf("[BLE] Volume set to %d%%\n", volume);
+                        // Send updated status with new volume
+                        sendBleStatus();
+                    }
+                }
+                return; // Volume command handled, don't process as config
+            }
+
+            // Regular WiFi/Gateway config (format: {"ssid":"...","password":"...","server":"...","port":3000})
 
             // Extract SSID
             int ssidStart = json.indexOf("\"ssid\":\"") + 8;
@@ -221,6 +243,7 @@ void sendBleStatus() {
     status += "\"firmwareVersion\":\"1.0.0\",";
     status += "\"batteryPercent\":" + String(getMoteBatteryPercent()) + ",";
     status += "\"batteryVoltage\":" + String(getMoteBatteryVoltage(), 2) + ",";
+    status += "\"volume\":" + String(getVolume()) + ",";
     status += "\"wifiConfigured\":" + String(strlen(configuredWifiSsid) > 0 ? "true" : "false") + ",";
     status += "\"wifiConnected\":" + String(wifiConnected ? "true" : "false") + ",";
     status += "\"wifiSsid\":\"" + String(configuredWifiSsid) + "\",";

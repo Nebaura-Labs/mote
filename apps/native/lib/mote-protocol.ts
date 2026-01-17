@@ -12,6 +12,7 @@
  */
 export type MoteMessage =
   | MoteConfigMessage
+  | MoteVolumeMessage
   | MoteStatusMessage
   | MoteAckMessage
   | MoteErrorMessage;
@@ -31,6 +32,15 @@ export interface MoteConfigMessage {
 }
 
 /**
+ * Volume control message sent from app to Mote device
+ *
+ * This message sets the speaker volume on the device.
+ */
+export interface MoteVolumeMessage {
+  volume: number;  // Volume level (0-100)
+}
+
+/**
  * Status message sent from Mote device to app
  *
  * Contains current device state including battery level, firmware version,
@@ -42,6 +52,7 @@ export interface MoteStatusMessage {
   firmwareVersion: string;     // Firmware version (e.g., "1.0.0")
   batteryPercent: number;      // Battery percentage (0-100)
   batteryVoltage: number;      // Battery voltage in volts (e.g., 3.95)
+  volume: number;              // Speaker volume level (0-100)
   wifiConfigured: boolean;     // true if WiFi credentials have been configured
   wifiConnected: boolean;      // true if WiFi is currently connected
   wifiSsid?: string;           // Configured WiFi SSID (for prefilling forms)

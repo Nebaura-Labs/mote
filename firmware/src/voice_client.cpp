@@ -81,6 +81,8 @@ static void handleServerMessage(const char* payload, size_t length) {
     }
     else if (msgType == "voice.done") {
         // Interaction complete, ready for next
+        finishAudioStream();  // Signal that audio stream is complete
+        restartMicrophone();  // Restart microphone I2S for fresh wake word detection
         setVoiceState(VOICE_IDLE);
     }
     else if (msgType == "voice.error") {
@@ -200,6 +202,12 @@ VoiceState getVoiceState() {
 
 bool sendVoiceAudio(const int16_t* samples, size_t count) {
     if (!wsConnected) {
+        // Debug: Log why audio isn't being sent
+        static unsigned long lastWsLog = 0;
+        if (millis() - lastWsLog > 5000) {
+            Serial.println("[Voice] Cannot send audio: WebSocket not connected");
+            lastWsLog = millis();
+        }
         return false;
     }
 
