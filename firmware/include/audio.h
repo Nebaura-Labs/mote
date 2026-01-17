@@ -72,6 +72,13 @@ void startAudioPlaybackTask();
 void finishAudioStream();
 
 /**
+ * Set callback for when buffered playback completes
+ * Called after all audio has been played and speaker is disabled
+ * @param callback Function to call when playback is done
+ */
+void setPlaybackCompleteCallback(void (*callback)());
+
+/**
  * Clear audio buffer and stop buffered playback
  */
 void clearAudioBuffer();

@@ -83,10 +83,18 @@ void onVoiceAudio(const uint8_t* data, size_t length) {
   // Data is PCM 16-bit from ElevenLabs at 16kHz (pcm_16000 format)
   size_t sampleCount = length / sizeof(int16_t);
   size_t queued = queueAudioData((const int16_t*)data, sampleCount);
-  
+
   if (queued < sampleCount) {
     Serial.printf("[Voice] Warning: Only queued %d/%d samples\n", queued, sampleCount);
   }
+}
+
+/**
+ * Audio playback complete callback
+ * Called when TTS playback finishes - restart mic and go to idle
+ */
+void onPlaybackComplete() {
+  onVoicePlaybackComplete();
 }
 
 /**
@@ -232,6 +240,8 @@ void loop() {
         Serial.println("[Audio] Audio initialized successfully");
         // Start buffered playback task for smooth TTS audio
         startAudioPlaybackTask();
+        // Set callback for when playback completes (to restart mic)
+        setPlaybackCompleteCallback(onPlaybackComplete);
       } else {
         Serial.println("[Audio] Audio initialization failed!");
       }

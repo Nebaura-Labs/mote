@@ -14,6 +14,9 @@ static uint16_t softwareGain = 300;  // 3x boost - ElevenLabs output is quiet
 static volatile bool audioPlaying = false;
 static volatile bool speakerEnabled = false;
 
+// Callback when playback completes
+static void (*playbackCompleteCallback)() = nullptr;
+
 // ============================================================================
 // Ring Buffer for Buffered Audio Playback
 // ============================================================================
@@ -111,7 +114,11 @@ static void audioPlaybackTask(void* parameter) {
                 streamFinished = false;
                 underrunCount = 0;
                 disableSpeaker();  // Turn off speaker to prevent noise
-                Serial.println("[Audio] Playback finished, microphone will be restarted");
+                Serial.println("[Audio] Playback finished");
+                // Notify callback that playback is done (for mic restart)
+                if (playbackCompleteCallback) {
+                    playbackCompleteCallback();
+                }
             } else {
                 // Buffer underrun - wait longer for more data (50ms instead of 5ms)
                 underrunCount++;
@@ -297,7 +304,10 @@ static bool setupAmplifier() {
 void enableSpeaker() {
     if (!speakerEnabled) {
         i2s_start(I2S_NUM_1);
-        i2s_zero_dma_buffer(I2S_NUM_1);  // Clear any garbage
+        // Clear DMA buffers and let I2S stabilize
+        i2s_zero_dma_buffer(I2S_NUM_1);
+        vTaskDelay(pdMS_TO_TICKS(20));  // Let I2S stabilize
+        i2s_zero_dma_buffer(I2S_NUM_1);  // Clear again after stabilization
         speakerEnabled = true;
         Serial.println("[Audio] Speaker enabled");
     }
@@ -435,6 +445,10 @@ void startAudioPlaybackTask() {
 void finishAudioStream() {
     Serial.println("[Audio] Audio stream finished, draining buffer...");
     streamFinished = true;
+}
+
+void setPlaybackCompleteCallback(void (*callback)()) {
+    playbackCompleteCallback = callback;
 }
 
 void clearAudioBuffer() {

@@ -86,10 +86,10 @@ static void handleServerMessage(const char* payload, size_t length) {
         setVoiceState(VOICE_SPEAKING);
     }
     else if (msgType == "voice.done") {
-        // Interaction complete, ready for next
-        finishAudioStream();  // Signal that audio stream is complete
-        restartMicrophone();  // Restart microphone I2S for fresh wake word detection
-        setVoiceState(VOICE_IDLE);
+        // Interaction complete - signal audio stream is done
+        // NOTE: Don't restart mic or change state here!
+        // The audio playback callback will do that when buffer is actually empty
+        finishAudioStream();
     }
     else if (msgType == "voice.interrupt") {
         // User said wake word while we were speaking - stop playback immediately
@@ -457,4 +457,10 @@ void setVoiceTranscriptCallback(VoiceTranscriptCallback callback) {
 
 void setVoiceAudioCallback(VoiceAudioCallback callback) {
     audioCallback = callback;
+}
+
+void onVoicePlaybackComplete() {
+    Serial.println("[Voice] Playback complete - restarting microphone");
+    restartMicrophone();
+    setVoiceState(VOICE_IDLE);
 }

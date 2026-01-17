@@ -81,4 +81,10 @@ void setVoiceTranscriptCallback(VoiceTranscriptCallback callback);
  */
 void setVoiceAudioCallback(VoiceAudioCallback callback);
 
+/**
+ * Called when audio playback completes
+ * Restarts microphone and transitions to IDLE state
+ */
+void onVoicePlaybackComplete();
+
 #endif // VOICE_CLIENT_H
