@@ -2,11 +2,12 @@ import type { IncomingMessage } from "http";
 import type { Duplex } from "stream";
 import crypto from "crypto";
 import { WebSocketServer, WebSocket } from "ws";
-import { db, session, voiceConfig, clawdConnection, decrypt } from "@mote/db";
+import { db, session, voiceConfig, clawdConnection, gatewayConnection, decrypt } from "@mote/db";
 import { eq } from "drizzle-orm";
 import { StreamingTranscription } from "@mote/api/services/deepgram";
 import { synthesizeSpeech } from "@mote/api/services/elevenlabs";
 import { GatewayClient, gatewayClientPool, MOTE_NODE_COMMANDS } from "@mote/api/gateway-client";
+import { BridgeClient } from "@mote/api/bridge-client";
 
 /**
  * Voice WebSocket Handler
@@ -43,6 +44,7 @@ interface VoiceSession {
   };
   transcription: StreamingTranscription | null;
   gatewayClient: GatewayClient | null;
+  bridgeClient: BridgeClient | null; // Node bridge connection for IoT commands
   state: "idle" | "listening" | "processing" | "speaking";
   transcriptBuffer: string;
   wakeWordDetected: boolean;
@@ -219,6 +221,7 @@ async function handleTextMessage(
         },
         transcription: null,
         gatewayClient: null,
+        bridgeClient: null,
         state: "idle",
         transcriptBuffer: "",
         wakeWordDetected: false,
@@ -610,16 +613,63 @@ async function setupGatewayConnection(session: VoiceSession) {
     const client = await gatewayClientPool.getClient(session.userId, token, config.gatewayUrl);
     session.gatewayClient = client;
 
-    // Set up node invoke handler for IoT commands from clawd
-    // This allows clawd to control devices on the user's local network via Mote
-    client.setNodeInvokeHandler(async (command, params) => {
-      return handleNodeInvoke(session, command, params);
-    });
-
     console.log(`[voice-ws] Gateway connected for device ${session.deviceId}, node ID: ${client.getNodeId()}`);
+
+    // Set up bridge connection for IoT commands from clawd
+    // The bridge is a separate TCP connection that makes the node appear "online"
+    await setupBridgeConnection(session, client);
   } catch (error) {
     console.error(`[voice-ws] Failed to connect Gateway:`, error);
     // Continue without Gateway - will return error messages
+  }
+}
+
+/**
+ * Set up Bridge connection for IoT commands
+ * This makes the Mote node appear "online" and receive node.invoke commands
+ */
+async function setupBridgeConnection(session: VoiceSession, gatewayClient: GatewayClient) {
+  try {
+    const nodeToken = gatewayClient.getNodeToken();
+    if (!nodeToken) {
+      console.log(`[voice-ws] No node token available, skipping bridge connection`);
+      return;
+    }
+
+    // Get SSH config for bridge tunnel
+    const sshConfig = await db.query.gatewayConnection.findFirst({
+      where: eq(gatewayConnection.userId, session.userId),
+    });
+
+    if (!sshConfig) {
+      console.log(`[voice-ws] No SSH config found, skipping bridge connection`);
+      return;
+    }
+
+    // Create bridge client
+    const bridgeClient = new BridgeClient({
+      nodeId: gatewayClient.getNodeId(),
+      nodeToken,
+      sshHost: sshConfig.sshHost,
+      sshPort: sshConfig.sshPort,
+      sshUsername: sshConfig.sshUsername,
+      sshPrivateKey: decrypt(sshConfig.sshPrivateKeyEncrypted),
+      bridgePort: 18790, // Default clawd bridge port
+    });
+
+    // Set up invoke handler to relay commands to ESP32
+    bridgeClient.setInvokeHandler(async (command, params) => {
+      return handleNodeInvoke(session, command, params);
+    });
+
+    // Connect to bridge
+    await bridgeClient.connect();
+    session.bridgeClient = bridgeClient;
+
+    console.log(`[voice-ws] Bridge connected for device ${session.deviceId} - node is now ONLINE`);
+  } catch (error) {
+    console.error(`[voice-ws] Failed to connect bridge (IoT will not work):`, error);
+    // Continue without bridge - voice still works, but IoT commands won't
   }
 }
 
@@ -716,6 +766,11 @@ function cleanupSession(deviceId: string) {
   if (session) {
     if (session.transcription) {
       session.transcription.close();
+    }
+    // Disconnect bridge client (per-session, not pooled)
+    if (session.bridgeClient) {
+      session.bridgeClient.disconnect();
+      session.bridgeClient = null;
     }
     // Note: GatewayClient is pooled per user, don't disconnect it here
     // Other sessions might be using the same client

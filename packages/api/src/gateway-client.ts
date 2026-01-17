@@ -69,6 +69,7 @@ export class GatewayClient {
 
   // Mote node properties
   private nodeId: string;
+  private nodeToken: string | null = null;
   private nodeInvokeHandler: NodeInvokeHandler | null = null;
   private isNodeRegistered = false;
 
@@ -92,6 +93,13 @@ export class GatewayClient {
    */
   getNodeId(): string {
     return this.nodeId;
+  }
+
+  /**
+   * Get the node token for bridge connection (available after registration)
+   */
+  getNodeToken(): string | null {
+    return this.nodeToken;
   }
 
   /**
@@ -297,11 +305,12 @@ export class GatewayClient {
   /**
    * Register this client as a Mote node with the Gateway
    * This allows clawd to invoke IoT commands on the ESP32
+   * Returns the node token for bridge connection, or null if registration failed
    */
-  async registerNode(): Promise<void> {
+  async registerNode(): Promise<string | null> {
     if (this.isNodeRegistered) {
       console.log(`[gateway-client] Node already registered: ${this.nodeId}`);
-      return;
+      return null;
     }
 
     console.log(`[gateway-client] Registering Mote node: ${this.nodeId}`);
@@ -320,19 +329,25 @@ export class GatewayClient {
 
       console.log(`[gateway-client] Node registration result:`, result);
 
+      let nodeToken: string | null = null;
+
       // Auto-approve if pending (Mote is a trusted first-party device)
       if (result.status === "pending" && result.request?.requestId) {
         console.log(`[gateway-client] Auto-approving Mote node...`);
         const approveResult = await this.request("node.pair.approve", {
           requestId: result.request.requestId,
-        });
+        }) as { node?: { token?: string } };
         console.log(`[gateway-client] Node approved:`, approveResult);
+        nodeToken = approveResult.node?.token || null;
       }
 
       this.isNodeRegistered = true;
+      this.nodeToken = nodeToken; // Store for bridge connection
+      return nodeToken;
     } catch (error) {
       console.error(`[gateway-client] Failed to register node:`, error);
       // Don't throw - node registration is optional, voice still works
+      return null;
     }
   }
 
