@@ -2,11 +2,12 @@ import type { IncomingMessage } from "http";
 import type { Duplex } from "stream";
 import crypto from "crypto";
 import { WebSocketServer, WebSocket } from "ws";
-import { db, session, voiceConfig, clawdConnection, decrypt } from "@mote/db";
+import { db, session, voiceConfig, clawdConnection, gatewayConnection, decrypt } from "@mote/db";
 import { eq } from "drizzle-orm";
 import { StreamingTranscription } from "@mote/api/services/deepgram";
 import { synthesizeSpeech } from "@mote/api/services/elevenlabs";
-import { GatewayClient, gatewayClientPool } from "@mote/api/gateway-client";
+import { GatewayClient, gatewayClientPool, MOTE_NODE_COMMANDS } from "@mote/api/gateway-client";
+import { BridgeClient } from "@mote/api/bridge-client";
 
 /**
  * Voice WebSocket Handler
@@ -18,6 +19,15 @@ import { GatewayClient, gatewayClientPool } from "@mote/api/gateway-client";
  * 4. Sends command to Gateway AI
  * 5. Returns ElevenLabs TTS audio
  */
+
+/**
+ * Pending IoT request waiting for ESP32 response
+ */
+interface PendingIoTRequest {
+  resolve: (result: { ok: boolean; payload?: unknown; error?: string }) => void;
+  reject: (error: Error) => void;
+  timeout: NodeJS.Timeout;
+}
 
 interface VoiceSession {
   ws: WebSocket;
@@ -34,10 +44,13 @@ interface VoiceSession {
   };
   transcription: StreamingTranscription | null;
   gatewayClient: GatewayClient | null;
+  bridgeClient: BridgeClient | null; // Node bridge connection for IoT commands
   state: "idle" | "listening" | "processing" | "speaking";
   transcriptBuffer: string;
   wakeWordDetected: boolean;
   commandBuffer: string;
+  // Pending IoT requests waiting for ESP32 response
+  pendingIoTRequests: Map<string, PendingIoTRequest>;
 }
 
 /**
@@ -208,10 +221,12 @@ async function handleTextMessage(
         },
         transcription: null,
         gatewayClient: null,
+        bridgeClient: null,
         state: "idle",
         transcriptBuffer: "",
         wakeWordDetected: false,
         commandBuffer: "",
+        pendingIoTRequests: new Map(),
       };
 
       console.log(`[voice-ws] Using persistent session key: ${sessionKey}`);
@@ -263,6 +278,30 @@ async function handleTextMessage(
           console.log(`[voice-ws] Wake word detected but no command yet, continuing to listen...`);
         }
         // If no wake word detected, just ignore silence (normal background)
+      }
+      break;
+    }
+
+    case "iot.response": {
+      // Response from ESP32 for an IoT command
+      const session = voiceSessions.get(currentDeviceId);
+      if (session) {
+        const requestId = message.requestId as string;
+        const pending = session.pendingIoTRequests.get(requestId);
+
+        if (pending) {
+          clearTimeout(pending.timeout);
+          session.pendingIoTRequests.delete(requestId);
+
+          console.log(`[voice-ws] Received IoT response for ${requestId}: ok=${message.ok}`);
+          pending.resolve({
+            ok: message.ok,
+            payload: message.payload,
+            error: message.error,
+          });
+        } else {
+          console.warn(`[voice-ws] Received IoT response for unknown request: ${requestId}`);
+        }
       }
       break;
     }
@@ -415,6 +454,7 @@ function handleTranscript(
     sendMessage(session.ws, { type: "voice.listening" });
   } else if (session.wakeWordDetected && data.isFinal) {
     // Capture command after wake word is detected
+    // IMPORTANT: Append to command buffer, don't replace - speech may span multiple transcripts
     const normalizedFinal = text.replace(/[.,!?;:'"]/g, "");
     const wakeWord = session.voiceConfig.wakeWord;
 
@@ -423,16 +463,21 @@ function handleTranscript(
       const idx = normalizedFinal.indexOf(wakeWord);
       const commandPart = normalizedFinal.substring(idx + wakeWord.length).trim();
       if (commandPart) {
+        // First part of command - set it
         session.commandBuffer = commandPart;
         console.log(`[voice-ws] Command (with wake word): "${commandPart}"`);
       }
     } else {
       // This transcript is AFTER the wake word (doesn't contain it)
-      // This IS the command - capture it directly
+      // APPEND to existing command buffer with space
       const commandPart = normalizedFinal.trim();
       if (commandPart) {
-        session.commandBuffer = commandPart;
-        console.log(`[voice-ws] Command (follow-up): "${commandPart}"`);
+        if (session.commandBuffer) {
+          session.commandBuffer += " " + commandPart;
+        } else {
+          session.commandBuffer = commandPart;
+        }
+        console.log(`[voice-ws] Command (appended): "${session.commandBuffer}"`);
       }
     }
   }
@@ -568,11 +613,113 @@ async function setupGatewayConnection(session: VoiceSession) {
     const client = await gatewayClientPool.getClient(session.userId, token, config.gatewayUrl);
     session.gatewayClient = client;
 
-    console.log(`[voice-ws] Gateway connected for device ${session.deviceId}`);
+    console.log(`[voice-ws] Gateway connected for device ${session.deviceId}, node ID: ${client.getNodeId()}`);
+
+    // Set up bridge connection for IoT commands from clawd
+    // The bridge is a separate TCP connection that makes the node appear "online"
+    await setupBridgeConnection(session, client);
   } catch (error) {
     console.error(`[voice-ws] Failed to connect Gateway:`, error);
     // Continue without Gateway - will return error messages
   }
+}
+
+/**
+ * Set up Bridge connection for IoT commands
+ * This makes the Mote node appear "online" and receive node.invoke commands
+ */
+async function setupBridgeConnection(session: VoiceSession, gatewayClient: GatewayClient) {
+  try {
+    const nodeToken = gatewayClient.getNodeToken();
+    if (!nodeToken) {
+      console.log(`[voice-ws] No node token available, skipping bridge connection`);
+      return;
+    }
+
+    // Get SSH config for bridge tunnel
+    const sshConfig = await db.query.gatewayConnection.findFirst({
+      where: eq(gatewayConnection.userId, session.userId),
+    });
+
+    if (!sshConfig) {
+      console.log(`[voice-ws] No SSH config found, skipping bridge connection`);
+      return;
+    }
+
+    // Create bridge client
+    const bridgeClient = new BridgeClient({
+      nodeId: gatewayClient.getNodeId(),
+      nodeToken,
+      sshHost: sshConfig.sshHost,
+      sshPort: sshConfig.sshPort,
+      sshUsername: sshConfig.sshUsername,
+      sshPrivateKey: decrypt(sshConfig.sshPrivateKeyEncrypted),
+      bridgePort: 18790, // Default clawd bridge port
+    });
+
+    // Set up invoke handler to relay commands to ESP32
+    bridgeClient.setInvokeHandler(async (command, params) => {
+      return handleNodeInvoke(session, command, params);
+    });
+
+    // Connect to bridge
+    await bridgeClient.connect();
+    session.bridgeClient = bridgeClient;
+
+    console.log(`[voice-ws] Bridge connected for device ${session.deviceId} - node is now ONLINE`);
+  } catch (error) {
+    console.error(`[voice-ws] Failed to connect bridge (IoT will not work):`, error);
+    // Continue without bridge - voice still works, but IoT commands won't
+  }
+}
+
+/**
+ * Handle incoming node.invoke command from clawd
+ * Relays IoT commands to ESP32 and waits for response
+ */
+async function handleNodeInvoke(
+  session: VoiceSession,
+  command: string,
+  params: Record<string, unknown>
+): Promise<{ ok: boolean; payload?: unknown; error?: string }> {
+  console.log(`[voice-ws] Handling node.invoke: command=${command}`, params);
+
+  // Validate command is one we support
+  if (!MOTE_NODE_COMMANDS.includes(command as typeof MOTE_NODE_COMMANDS[number])) {
+    return { ok: false, error: `Unknown command: ${command}` };
+  }
+
+  // Check if ESP32 is connected
+  if (session.ws.readyState !== WebSocket.OPEN) {
+    return { ok: false, error: "Mote device not connected" };
+  }
+
+  // Generate unique request ID
+  const requestId = crypto.randomUUID();
+
+  // Create promise that will be resolved when ESP32 responds
+  const result = await new Promise<{ ok: boolean; payload?: unknown; error?: string }>((resolve, reject) => {
+    // Set timeout (30 seconds for IoT operations)
+    const timeout = setTimeout(() => {
+      session.pendingIoTRequests.delete(requestId);
+      resolve({ ok: false, error: "IoT command timeout" });
+    }, 30000);
+
+    // Store pending request
+    session.pendingIoTRequests.set(requestId, { resolve, reject, timeout });
+
+    // Send command to ESP32
+    sendMessage(session.ws, {
+      type: "iot.request",
+      requestId,
+      command,
+      params,
+    });
+
+    console.log(`[voice-ws] Sent IoT request ${requestId} to ESP32: ${command}`);
+  });
+
+  return result;
 }
 
 /**
@@ -619,6 +766,11 @@ function cleanupSession(deviceId: string) {
   if (session) {
     if (session.transcription) {
       session.transcription.close();
+    }
+    // Disconnect bridge client (per-session, not pooled)
+    if (session.bridgeClient) {
+      session.bridgeClient.disconnect();
+      session.bridgeClient = null;
     }
     // Note: GatewayClient is pooled per user, don't disconnect it here
     // Other sessions might be using the same client

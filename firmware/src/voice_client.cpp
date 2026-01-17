@@ -1,6 +1,8 @@
 #include "voice_client.h"
 #include "audio.h"
 #include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
 
 // WebSocket client
 static WebSocketsClient webSocket;
@@ -18,6 +20,10 @@ static VoiceAudioCallback audioCallback = nullptr;
 // Reconnection
 static unsigned long lastReconnectAttempt = 0;
 static const unsigned long RECONNECT_INTERVAL = 5000;
+
+// Forward declaration
+static void handleIoTRequest(const char* payload, size_t length);
+static void sendIoTResponse(const String& requestId, bool ok, const String& payload, const String& error);
 
 /**
  * Set voice state and notify callback
@@ -101,6 +107,178 @@ static void handleServerMessage(const char* payload, size_t length) {
             Serial.printf("[Voice] Error: %s\n", error.c_str());
         }
         setVoiceState(VOICE_IDLE);
+    }
+    else if (msgType == "iot.request") {
+        // IoT command from clawd - handle asynchronously
+        handleIoTRequest(payload, length);
+    }
+}
+
+/**
+ * Send IoT response back to server
+ */
+static void sendIoTResponse(const String& requestId, bool ok, const String& payload, const String& error) {
+    StaticJsonDocument<1024> doc;
+    doc["type"] = "iot.response";
+    doc["requestId"] = requestId;
+    doc["ok"] = ok;
+
+    if (ok && payload.length() > 0) {
+        // Parse payload as JSON if possible
+        StaticJsonDocument<512> payloadDoc;
+        DeserializationError err = deserializeJson(payloadDoc, payload);
+        if (err) {
+            doc["payload"] = payload; // Send as string if not valid JSON
+        } else {
+            doc["payload"] = payloadDoc;
+        }
+    }
+
+    if (!ok && error.length() > 0) {
+        doc["error"] = error;
+    }
+
+    String response;
+    serializeJson(doc, response);
+    webSocket.sendTXT(response);
+    Serial.printf("[IoT] Sent response: %s\n", response.c_str());
+}
+
+/**
+ * Handle IoT HTTP request
+ */
+static void handleIoTHttp(const String& requestId, JsonObject& params) {
+    String url = params["url"] | "";
+    String method = params["method"] | "GET";
+    String body = params["body"] | "";
+
+    if (url.length() == 0) {
+        sendIoTResponse(requestId, false, "", "URL is required");
+        return;
+    }
+
+    Serial.printf("[IoT] HTTP %s %s\n", method.c_str(), url.c_str());
+
+    HTTPClient http;
+    http.begin(url);
+    http.setTimeout(10000); // 10 second timeout
+
+    // Add headers if provided
+    JsonObject headers = params["headers"];
+    if (headers) {
+        for (JsonPair kv : headers) {
+            http.addHeader(kv.key().c_str(), kv.value().as<String>());
+        }
+    }
+
+    int httpCode;
+    if (method == "GET") {
+        httpCode = http.GET();
+    } else if (method == "POST") {
+        if (!headers || !headers.containsKey("Content-Type")) {
+            http.addHeader("Content-Type", "application/json");
+        }
+        httpCode = http.POST(body);
+    } else if (method == "PUT") {
+        if (!headers || !headers.containsKey("Content-Type")) {
+            http.addHeader("Content-Type", "application/json");
+        }
+        httpCode = http.PUT(body);
+    } else if (method == "DELETE") {
+        httpCode = http.sendRequest("DELETE", body);
+    } else {
+        sendIoTResponse(requestId, false, "", "Unsupported HTTP method: " + method);
+        http.end();
+        return;
+    }
+
+    if (httpCode > 0) {
+        String response = http.getString();
+        Serial.printf("[IoT] HTTP response %d: %s\n", httpCode, response.substring(0, 100).c_str());
+
+        // Build response payload
+        StaticJsonDocument<512> payload;
+        payload["statusCode"] = httpCode;
+        payload["body"] = response;
+
+        String payloadStr;
+        serializeJson(payload, payloadStr);
+
+        sendIoTResponse(requestId, httpCode >= 200 && httpCode < 400, payloadStr, "");
+    } else {
+        String error = "HTTP request failed: " + String(http.errorToString(httpCode).c_str());
+        Serial.printf("[IoT] %s\n", error.c_str());
+        sendIoTResponse(requestId, false, "", error);
+    }
+
+    http.end();
+}
+
+/**
+ * Handle IoT WiFi scan request
+ */
+static void handleWifiScan(const String& requestId) {
+    Serial.println("[IoT] Starting WiFi scan...");
+
+    int n = WiFi.scanNetworks();
+
+    StaticJsonDocument<2048> payload;
+    JsonArray networks = payload.createNestedArray("networks");
+
+    for (int i = 0; i < n && i < 20; i++) { // Limit to 20 networks
+        JsonObject net = networks.createNestedObject();
+        net["ssid"] = WiFi.SSID(i);
+        net["rssi"] = WiFi.RSSI(i);
+        net["channel"] = WiFi.channel(i);
+        net["encryption"] = WiFi.encryptionType(i);
+    }
+
+    payload["count"] = n;
+
+    String payloadStr;
+    serializeJson(payload, payloadStr);
+
+    Serial.printf("[IoT] Found %d networks\n", n);
+    sendIoTResponse(requestId, true, payloadStr, "");
+
+    WiFi.scanDelete(); // Clean up scan results
+}
+
+/**
+ * Handle incoming IoT request from server
+ */
+static void handleIoTRequest(const char* payload, size_t length) {
+    StaticJsonDocument<1024> doc;
+    DeserializationError error = deserializeJson(doc, payload, length);
+
+    if (error) {
+        Serial.printf("[IoT] Failed to parse request: %s\n", error.c_str());
+        return;
+    }
+
+    String requestId = doc["requestId"] | "";
+    String command = doc["command"] | "";
+    JsonObject params = doc["params"];
+
+    Serial.printf("[IoT] Request %s: command=%s\n", requestId.c_str(), command.c_str());
+
+    if (requestId.length() == 0) {
+        Serial.println("[IoT] Missing requestId");
+        return;
+    }
+
+    if (command == "iot.http") {
+        handleIoTHttp(requestId, params);
+    }
+    else if (command == "wifi.scan") {
+        handleWifiScan(requestId);
+    }
+    else if (command == "iot.discover") {
+        // TODO: Implement mDNS/SSDP discovery
+        sendIoTResponse(requestId, false, "", "iot.discover not yet implemented");
+    }
+    else {
+        sendIoTResponse(requestId, false, "", "Unknown command: " + command);
     }
 }
 

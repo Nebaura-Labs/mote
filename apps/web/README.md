@@ -26,11 +26,15 @@ This is a **TanStack Start** application that provides:
 
 ## Voice Services
 
+Each user configures their own API keys in the mobile app:
+
 | Service | Purpose |
 |---------|---------|
 | [Deepgram](https://deepgram.com) | Real-time speech-to-text (Nova-2 model) |
 | [ElevenLabs](https://elevenlabs.io) | Text-to-speech synthesis |
 | [clawd.bot](https://clawd.bot) | AI conversation backend |
+
+API keys are stored encrypted in the database per-user, not as server environment variables.
 
 ## Project Structure
 
@@ -72,21 +76,22 @@ const ttsResult = await synthesizeSpeech({
 Create a `.env` file:
 
 ```bash
-# clawd.bot - Required
-CLAWD_API_KEY=your_clawd_key
-CLAWD_ENDPOINT=https://your-instance.clawd.bot
-
-# Voice services
-DEEPGRAM_API_KEY=your_deepgram_key
-ELEVENLABS_API_KEY=your_elevenlabs_key
-ELEVENLABS_VOICE_ID=your_voice_id
-
 # Database (Neon Postgres)
-DATABASE_URL=postgres://...
+DATABASE_URL=postgresql://user:password@host:5432/database
 
-# Auth
-BETTER_AUTH_SECRET=your_secret
+# Authentication
+BETTER_AUTH_SECRET=your-secret-here-at-least-32-characters-long
+BETTER_AUTH_URL=http://localhost:3001
+CORS_ORIGIN=http://localhost:8081
+
+# Encryption key for storing user API keys securely
+ENCRYPTION_KEY=your-encryption-key-here-at-least-32-characters
+
+# Environment
+NODE_ENV=development
 ```
+
+**Note:** Deepgram, ElevenLabs, and clawd.bot API keys are NOT environment variables. They are stored per-user in the database (encrypted) and configured through the mobile app settings.
 
 ## Development
 
