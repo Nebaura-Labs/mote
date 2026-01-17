@@ -100,26 +100,104 @@ Connected via 100kΩ/100kΩ voltage divider (divides 4.2V max to 2.1V safe for A
 ### System Flow
 
 ```
-Mote Device (Hardware) ←→ Mobile App (Bridge) ←→ AI Gateway (Clawdbot)
+┌────────────────┐        ┌─────────────────┐        ┌──────────────────┐
+│  Mote Device   │  WiFi  │  Gateway Server │  API   │ External Services│
+│   (ESP32-S3)   │◄──────►│   (apps/web)    │◄──────►│                  │
+├────────────────┤   WS   ├─────────────────┤        ├──────────────────┤
+│ • Microphone   │────────│ • WebSocket     │────────│ • Deepgram (STT) │
+│ • Speaker      │◄───────│ • Voice Handler │◄───────│ • ElevenLabs TTS │
+│ • Face Display │        │ • Session Mgmt  │◄──────►│ • clawd.bot (AI) │
+└────────────────┘        └─────────────────┘        └──────────────────┘
+        │
+        │ BLE (config)
+        ▼
+┌────────────────┐
+│  Mobile App    │
+│ (apps/native)  │
+└────────────────┘
 ```
 
 The Mote handles:
-- Wake word detection
-- Audio input/output via I2S
-- Animated face display rendering
-- Physical button controls
+- Continuous audio streaming to gateway via WebSocket
+- TTS audio playback from 60-second PSRAM ring buffer
+- Voice Activity Detection (VAD) for end-of-speech detection
+- Animated face display synchronized to voice state
+- BLE configuration for WiFi and gateway settings
 - Battery monitoring
-
-The mobile app bridges WiFi/Bluetooth communication to the AI backend.
 
 ### Code Organization
 
 ```
 src/
-  main.cpp          # Main firmware entry point
-include/            # Project header files
-lib/                # Project-specific libraries
-test/               # Unit tests
+  main.cpp            # Main firmware entry point, device modes
+  audio.cpp           # I2S audio, ring buffer, playback task
+  voice_client.cpp    # WebSocket client for voice chat
+  mote_face.cpp       # Animated face display rendering
+  ble_config.cpp      # BLE service for WiFi/gateway configuration
+include/
+  audio.h             # Audio API declarations
+  voice_client.h      # Voice client API declarations
+  mote_face.h         # Face animation API
+  ble_config.h        # BLE configuration API
+docs/                 # Hardware documentation
+test/                 # Unit tests
+```
+
+## Voice Client Architecture
+
+### WebSocket Protocol
+
+The voice client connects to the gateway server via WebSocket and exchanges JSON messages:
+
+```cpp
+// Voice state machine
+enum VoiceState {
+    VOICE_DISCONNECTED,  // Not connected to server
+    VOICE_IDLE,          // Connected, streaming audio, waiting for wake word
+    VOICE_LISTENING,     // Server detected wake word, capturing command
+    VOICE_PROCESSING,    // Waiting for AI response
+    VOICE_SPEAKING       // Playing response audio
+};
+```
+
+### Messages Sent to Server
+
+| Message | Format | Description |
+|---------|--------|-------------|
+| `voice.start` | JSON | Start voice session with token |
+| `voice.audio` | Binary | PCM 16-bit audio data |
+| `voice.silence` | JSON | Speech ended (VAD triggered) |
+| `voice.stop` | JSON | End voice session |
+
+### Messages Received from Server
+
+| Message | Format | Description |
+|---------|--------|-------------|
+| `voice.ready` | JSON | Session established |
+| `voice.listening` | JSON | Wake word detected |
+| `voice.transcript` | JSON | User speech transcription |
+| `voice.processing` | JSON | AI generating response |
+| `voice.audio` | Binary | TTS audio (PCM 16-bit, 16kHz) |
+| `voice.speaking` | JSON | Response playback starting |
+| `voice.done` | JSON | Response complete |
+| `voice.error` | JSON | Error occurred |
+
+### Voice Activity Detection (VAD)
+
+The firmware uses RMS energy-based VAD to detect end of speech:
+
+```cpp
+#define VAD_THRESHOLD 300       // RMS energy threshold
+#define VAD_HOLDOFF_MS 800      // Delay before triggering silence
+
+bool detectVoiceActivity(int16_t* samples, size_t count) {
+    int64_t sumSquares = 0;
+    for (size_t i = 0; i < count; i++) {
+        sumSquares += (int64_t)samples[i] * samples[i];
+    }
+    float rms = sqrt((float)sumSquares / count);
+    return rms > VAD_THRESHOLD;
+}
 ```
 
 ## Audio Architecture
@@ -127,10 +205,37 @@ test/               # Unit tests
 ### I2S Configuration
 
 The device uses two I2S interfaces:
-1. **I2S Input (I2S0):** INMP441 microphone
-2. **I2S Output (I2S1):** MAX98357A amplifier
+1. **I2S Input (I2S0):** INMP441 microphone at 16kHz
+2. **I2S Output (I2S1):** MAX98357A amplifier at 16kHz
 
-Both must be configured with appropriate sample rates (typically 16kHz for voice).
+### Ring Buffer for TTS Playback
+
+TTS audio is buffered in PSRAM for smooth playback:
+
+```cpp
+// 60 seconds of audio at 16kHz (~1MB in PSRAM)
+#define AUDIO_RING_BUFFER_SIZE  (16000 * 60)
+
+// Allocated in PSRAM
+audioRingBuffer = (int16_t*)ps_malloc(AUDIO_RING_BUFFER_SIZE * sizeof(int16_t));
+
+// CRITICAL: Zero buffer to prevent garbage audio on startup
+memset(audioRingBuffer, 0, AUDIO_RING_BUFFER_SIZE * sizeof(int16_t));
+```
+
+A FreeRTOS task handles continuous playback with underrun detection:
+
+```cpp
+xTaskCreatePinnedToCore(
+    audioPlaybackTask,
+    "AudioPlayback",
+    4096,
+    NULL,
+    5,              // High priority for smooth playback
+    &audioTaskHandle,
+    1               // Run on core 1
+);
+```
 
 ### Volume Control
 
@@ -213,13 +318,39 @@ The firmware integrates **Picovoice Porcupine** for wake word detection. Audio f
 
 ## Common Troubleshooting
 
+### Hardware Issues
+
 | Issue | Solution |
 |-------|----------|
-| Blank display | Verify BL pin HIGH, check SPI wiring |
+| Blank display | Verify BL pin (GPIO 8) HIGH, check SPI wiring |
 | No audio output | Check amplifier 5V power, verify I2S pins |
 | Mic not working | Ensure L/R pin connected to GND |
 | Buttons not responding | Use INPUT_PULLUP mode |
 | Incorrect battery reading | Verify 100kΩ voltage divider |
+
+### Voice Chat Issues
+
+| Issue | Solution |
+|-------|----------|
+| Loud noise on startup | Fixed: memset buffer, i2s_zero_dma_buffer, bufferReady flag |
+| Choppy/stuttering audio | Check WiFi signal, increase buffer size |
+| Audio cuts off early | Increase AUDIO_RING_BUFFER_SIZE (default 60s) |
+| Static/distortion | Reduce gain in voice-handler.ts (default 1.5x) |
+| WebSocket disconnects | Check WiFi, verify gateway URL and token |
+| VAD not triggering | Lower VAD_THRESHOLD (default 300) |
+| VAD always active | Increase VAD_THRESHOLD |
+
+### Serial Log Prefixes
+
+| Prefix | Component |
+|--------|-----------|
+| `[Mote]` | Main firmware |
+| `[Audio]` | Audio subsystem |
+| `[Voice]` | Voice WebSocket client |
+| `[VAD]` | Voice Activity Detection |
+| `[WiFi]` | WiFi connection |
+| `[BLE]` | Bluetooth configuration |
+| `[Battery]` | Battery monitoring |
 
 ## Development Workflow
 
@@ -231,11 +362,13 @@ The firmware integrates **Picovoice Porcupine** for wake word detection. Audio f
 
 ## Library Dependencies
 
-Key libraries to include in `platformio.ini`:
-- TFT_eSPI or LovyanGFX (display)
+Key libraries in `platformio.ini`:
+- **LovyanGFX** or TFT_eSPI (display rendering)
+- **WebSocketsClient** (voice chat WebSocket connection)
+- **ArduinoJson** (JSON message parsing)
 - ESP32 I2S (built into ESP-IDF)
 - WiFi/BLE (built into ESP32 Arduino)
-- Picovoice Porcupine (wake word)
+- Picovoice Porcupine (wake word, optional)
 
 ## Hardware Constraints
 

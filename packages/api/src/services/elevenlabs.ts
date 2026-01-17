@@ -5,6 +5,32 @@ import { ElevenLabsClient } from "elevenlabs";
  * Handles voice synthesis using ElevenLabs API
  */
 
+/**
+ * Apply gain (volume boost) to PCM 16-bit audio
+ * @param buffer PCM audio buffer (16-bit signed little-endian)
+ * @param gain Gain multiplier (1.0 = normal, 2.0 = 2x louder)
+ */
+function applyGainToPcm(buffer: Buffer, gain: number): Buffer {
+	const output = Buffer.alloc(buffer.length);
+
+	for (let i = 0; i < buffer.length; i += 2) {
+		// Read 16-bit signed sample (little-endian)
+		let sample = buffer.readInt16LE(i);
+
+		// Apply gain
+		sample = Math.round(sample * gain);
+
+		// Clamp to prevent clipping
+		if (sample > 32767) sample = 32767;
+		if (sample < -32768) sample = -32768;
+
+		// Write back
+		output.writeInt16LE(sample, i);
+	}
+
+	return output;
+}
+
 export interface SynthesisOptions {
 	apiKey: string;
 	text: string;
@@ -12,7 +38,10 @@ export interface SynthesisOptions {
 	model?: string;
 	stability?: number;
 	similarityBoost?: number;
+	useSpeakerBoost?: boolean;
 	outputFormat?: "mp3_44100_128" | "pcm_16000" | "pcm_22050" | "pcm_24000";
+	/** Software gain multiplier (1.0 = normal, 2.0 = 2x louder) */
+	gain?: number;
 }
 
 export interface SynthesisResult {
@@ -34,7 +63,9 @@ export async function synthesizeSpeech(
 		model = "eleven_turbo_v2_5",
 		stability = 0.5,
 		similarityBoost = 0.75,
+		useSpeakerBoost = true,
 		outputFormat = "mp3_44100_128",
+		gain = 1.0,
 	} = options;
 
 	try {
@@ -51,6 +82,7 @@ export async function synthesizeSpeech(
 			voice_settings: {
 				stability,
 				similarity_boost: similarityBoost,
+				use_speaker_boost: useSpeakerBoost,
 			},
 			output_format: outputFormat,
 		});
@@ -61,7 +93,12 @@ export async function synthesizeSpeech(
 			chunks.push(Buffer.from(chunk));
 		}
 
-		const audioBuffer = Buffer.concat(chunks);
+		let audioBuffer = Buffer.concat(chunks);
+
+		// Apply gain to PCM audio (boost volume)
+		if (gain !== 1.0 && outputFormat.startsWith("pcm")) {
+			audioBuffer = applyGainToPcm(audioBuffer, gain);
+		}
 
 		// Estimate duration (rough approximation)
 		// For MP3 at 44.1kHz, 128kbps: ~16KB per second

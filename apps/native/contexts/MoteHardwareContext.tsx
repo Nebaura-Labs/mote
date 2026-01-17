@@ -33,6 +33,7 @@ interface MoteHardwareContextType {
     websocketPort: number;
     gatewayToken: string;
   }) => Promise<void>;
+  sendVolume: (volume: number) => Promise<void>;
   clearError: () => void;
 }
 
@@ -261,10 +262,23 @@ export function MoteHardwareProvider({ children }: { children: React.ReactNode }
    * Connect to specific Mote device via BLE
    */
   const connect = async (deviceId: string) => {
+    // Prevent multiple simultaneous connection attempts
+    if (isConnecting) {
+      console.log('[MoteHardware] Connection already in progress, ignoring');
+      return;
+    }
+
     // Cancel any pending reconnect
     if (reconnectTimerRef.current) {
       clearTimeout(reconnectTimerRef.current);
       reconnectTimerRef.current = null;
+    }
+
+    // Disconnect any existing connection first
+    if (bleClient.isConnected()) {
+      console.log('[MoteHardware] Disconnecting existing connection first');
+      bleClient.disconnect();
+      await new Promise(resolve => setTimeout(resolve, 500)); // Wait for disconnect
     }
 
     isManualDisconnectRef.current = false;
@@ -354,6 +368,24 @@ export function MoteHardwareProvider({ children }: { children: React.ReactNode }
   };
 
   /**
+   * Send volume control to Mote device
+   */
+  const sendVolume = async (volume: number) => {
+    if (!isConnected) {
+      throw new Error('Not connected to Mote device. Please connect first.');
+    }
+
+    try {
+      await bleClient.sendVolume(volume);
+      console.log('[MoteHardware] Volume sent to device:', volume);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send volume';
+      setConnectionError(errorMessage);
+      throw error;
+    }
+  };
+
+  /**
    * Clear connection error
    */
   const clearError = () => {
@@ -373,6 +405,7 @@ export function MoteHardwareProvider({ children }: { children: React.ReactNode }
         connect,
         disconnect,
         sendConfig,
+        sendVolume,
         clearError,
       }}
     >

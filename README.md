@@ -1,4 +1,4 @@
-# Nebaura Labs Mote - Firmware
+# Nebaura Labs Mote
 
 **Mote - An open-source ESP32-S3 voice companion for Clawd**
 
@@ -14,18 +14,30 @@
 
 Connect to your personal AI powered by [clawd.bot](https://clawd.bot) through a physical device with an animated face, voice interaction, and tactile controls.
 
+**Live Demo:** Mote connects to your own AI gateway with real-time voice chat using **Deepgram** for speech-to-text and **ElevenLabs** for text-to-speech.
+
 ---
 
 ## 🎯 What is Mote?
 
 The **Mote** is a voice assistant companion device that brings your personal AI into the physical world. It features:
 
-- 🎨 **Animated Face Display** - 2" IPS LCD with expressive character
-- 🎤 **Voice Interaction** - I2S MEMS microphone with wake word detection
-- 🔊 **Quality Audio** - I2S amplifier and speaker for natural conversations
-- 🔘 **Physical Controls** - Volume and mute buttons
+- 🎨 **Animated Face Display** - 2" IPS LCD with expressive character that reacts to conversation
+- 🎤 **Real-time Voice Chat** - Stream audio to the cloud for instant transcription via Deepgram
+- 🔊 **Natural TTS Responses** - High-quality voice synthesis via ElevenLabs with buffered playback
+- 🧠 **AI-Powered Conversations** - Connect to clawd.bot or any AI gateway
+- 📱 **Mobile App Configuration** - Easy BLE setup via React Native app
 - 🔋 **Battery Powered** - Portable with LiPo battery and USB-C charging
-- 📱 **Expo Bridge App** - Connects to your clawd.bot instance via mobile app
+- 🌐 **WiFi + WebSocket** - Direct connection to your gateway server
+
+### Voice Chat Features
+
+| Feature | Technology | Description |
+|---------|------------|-------------|
+| Speech-to-Text | Deepgram Nova-2 | Real-time audio streaming with low latency transcription |
+| Text-to-Speech | ElevenLabs | Natural voice synthesis (pcm_16000 format) |
+| Audio Buffering | PSRAM Ring Buffer | 60-second buffer for smooth playback of long responses |
+| Voice Detection | RMS Energy VAD | Automatic silence detection to trigger processing |
 
 ### Form Factors
 
@@ -37,21 +49,42 @@ The **Mote** is a voice assistant companion device that brings your personal AI 
 ## 🏗️ Architecture
 
 ```
-┌──────────────────┐      ┌──────────────┐      ┌─────────────────┐
-│                  │      │   Expo App   │      │   clawd.bot     │
-│   Mote Device    │◄────►│   (Bridge)   │◄────►│  Your Personal  │
-│  ESP32-S3 + LCD  │ WiFi │              │ API  │   AI Gateway    │
-│                  │  BT  │  iOS/Android │      │  Cloud or Local │
-└──────────────────┘      └──────────────┘      └─────────────────┘
-   This Firmware         Mobile App Repo         Your AI Backend
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              VOICE CHAT FLOW                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────┐      ┌──────────────────┐      ┌─────────────────────────┐
+│   Mote Device    │      │   Gateway Server │      │   External Services     │
+│   (ESP32-S3)     │      │   (apps/web)     │      │                         │
+├──────────────────┤      ├──────────────────┤      ├─────────────────────────┤
+│ • INMP441 Mic    │─────►│ • WebSocket      │─────►│ • Deepgram (STT)        │
+│ • MAX98357A Amp  │◄─────│ • Voice Handler  │◄─────│ • ElevenLabs (TTS)      │
+│ • ST7789 Display │      │ • Session Mgmt   │◄────►│ • clawd.bot (AI)        │
+│ • Face Animation │      │                  │      │                         │
+└──────────────────┘      └──────────────────┘      └─────────────────────────┘
+        │                         │
+        │  BLE Config             │  API Keys
+        ▼                         ▼
+┌──────────────────┐      ┌──────────────────┐
+│   Mobile App     │      │   Environment    │
+│   (apps/native)  │      │   Variables      │
+├──────────────────┤      ├──────────────────┤
+│ • WiFi Setup     │      │ • DEEPGRAM_KEY   │
+│ • Gateway Config │      │ • ELEVENLABS_KEY │
+│ • Device Pairing │      │ • GATEWAY_URL    │
+└──────────────────┘      └──────────────────┘
 ```
 
-**How it works:**
-1. Wake word triggers Mote to listen
-2. Audio sent to your phone via Bluetooth/WiFi
-3. Phone bridges to your clawd.bot instance
-4. AI response streamed back and spoken through Mote
-5. Animated face reacts to conversation state
+**Voice Chat Flow:**
+1. Mote streams audio continuously over WebSocket to Gateway Server
+2. Gateway pipes audio to Deepgram for real-time transcription
+3. On wake word detection, server captures user's command
+4. Voice Activity Detection (VAD) on ESP32 detects end of speech
+5. Transcribed text sent to clawd.bot AI for response
+6. Response synthesized via ElevenLabs TTS (pcm_16000 format)
+7. PCM audio streamed back to Mote over WebSocket
+8. Mote plays audio from 60-second PSRAM ring buffer
+9. Face animation updates based on conversation state (idle → listening → thinking → speaking)
 
 ---
 
@@ -112,29 +145,65 @@ This is a **monorepo** containing all Mote components:
 
 ```
 mote/
-├── firmware/                 # ESP32-S3 Firmware (PlatformIO)
+├── firmware/                 # ESP32-S3 Firmware (PlatformIO, C++)
 │   ├── src/
-│   │   └── main.cpp          # Main firmware entry point
+│   │   ├── main.cpp          # Main firmware entry point
+│   │   ├── audio.cpp         # I2S audio, ring buffer, playback task
+│   │   ├── voice_client.cpp  # WebSocket client for voice chat
+│   │   ├── mote_face.cpp     # Animated face display
+│   │   └── ble_config.cpp    # BLE configuration service
 │   ├── include/              # Header files
-│   ├── lib/                  # Firmware libraries
-│   ├── test/                 # Unit tests
+│   ├── docs/                 # Hardware documentation
 │   ├── platformio.ini        # PlatformIO configuration
 │   └── CLAUDE.md             # Firmware developer docs
 │
 ├── apps/
-│   └── mobile/               # Expo/React Native Bridge App
-│       ├── src/
+│   ├── web/                  # Gateway Server (TanStack Start + WebSocket)
+│   │   ├── src/
+│   │   │   ├── websocket/    # Voice WebSocket handler
+│   │   │   │   └── voice-handler.ts  # Deepgram + ElevenLabs integration
+│   │   │   └── routes/       # API routes
+│   │   └── package.json
+│   │
+│   └── native/               # React Native Mobile App (Expo)
+│       ├── app/              # Expo Router screens
+│       ├── lib/              # BLE client, Mote protocol
 │       └── package.json
 │
 ├── packages/
+│   ├── api/                  # Shared API services
+│   │   └── src/services/
+│   │       └── elevenlabs.ts # ElevenLabs TTS with PCM gain
 │   └── shared/               # Shared types and constants
-│       └── src/
-│           └── index.ts      # BLE protocol, device types, etc.
 │
-├── package.json              # Root workspace config
-├── turbo.json                # Turborepo config
-├── pnpm-workspace.yaml       # PNPM workspace config
+├── package.json              # Root workspace config (pnpm)
+├── turbo.json                # Turborepo pipeline
 └── README.md                 # This file
+```
+
+---
+
+## 🔑 API Keys Required
+
+To run the full voice chat system, you need API keys from:
+
+| Service | Purpose | Get Key |
+|---------|---------|---------|
+| **Deepgram** | Real-time speech-to-text | [deepgram.com](https://deepgram.com) |
+| **ElevenLabs** | Text-to-speech synthesis | [elevenlabs.io](https://elevenlabs.io) |
+| **clawd.bot** | AI gateway (optional) | [clawd.bot](https://clawd.bot) |
+
+Create a `.env` file in `apps/web/`:
+
+```bash
+# apps/web/.env
+DEEPGRAM_API_KEY=your_deepgram_key
+ELEVENLABS_API_KEY=your_elevenlabs_key
+ELEVENLABS_VOICE_ID=your_voice_id  # e.g., "21m00Tcm4TlvDq8ikWAM"
+
+# Optional: clawd.bot integration
+CLAWD_API_KEY=your_clawd_key
+CLAWD_ENDPOINT=https://your-instance.clawd.bot
 ```
 
 ---
@@ -147,14 +216,15 @@ mote/
 # Install dependencies
 pnpm install
 
-# Or use npm/yarn
-npm install
+# Set up environment
+cp apps/web/.env.example apps/web/.env
+# Edit .env with your API keys
 ```
 
 ### Monorepo Commands
 
 ```bash
-# Run all dev servers
+# Run all dev servers (web + native)
 pnpm dev
 
 # Build all packages
@@ -165,6 +235,18 @@ pnpm lint
 
 # Format code
 pnpm format
+```
+
+### Gateway Server Development (apps/web)
+
+```bash
+# Start gateway server with WebSocket
+pnpm web:dev
+# Server runs on http://localhost:3000
+# WebSocket voice endpoint: ws://localhost:3000/voice
+
+# Build for production
+pnpm web:build
 ```
 
 ### Firmware Development (ESP32-S3)
@@ -186,11 +268,11 @@ pnpm firmware:monitor
 cd firmware && pio run -t upload && pio device monitor
 ```
 
-### Mobile App Development
+### Mobile App Development (apps/native)
 
 ```bash
 # Start Expo dev server
-cd apps/mobile
+cd apps/native
 pnpm start
 
 # Run on iOS
@@ -202,15 +284,40 @@ pnpm android
 
 ### Pin Configuration
 
-All GPIO pins are defined in `packages/shared/src/index.ts`:
+All GPIO pins are defined in the firmware headers:
 
-- **Display (SPI):** GPIO 2, 4, 5, 17, 18, 23
-- **Microphone (I2S):** GPIO 14, 15, 32
-- **Amplifier (I2S):** GPIO 22, 25, 26
-- **Buttons:** GPIO 12, 27, 33
-- **Battery ADC:** GPIO 34
+| Component | Pins | Notes |
+|-----------|------|-------|
+| **Display (SPI)** | MOSI:11, CLK:13, CS:10, DC:9, RST:14, BL:8 | ST7789 240x320 |
+| **Microphone (I2S)** | WS:39, SCK:40, SD:41 | INMP441 3.3V only |
+| **Amplifier (I2S)** | BCLK:16, LRC:17, DIN:18 | MAX98357A 5V |
+| **Battery ADC** | GPIO 2 | 100kΩ voltage divider |
+| **RGB LED** | GPIO 38 | NeoPixel status indicator |
 
-See [firmware/CLAUDE.md](./firmware/CLAUDE.md) for detailed firmware architecture.
+See [firmware/CLAUDE.md](./firmware/CLAUDE.md) and [docs/DIAGRAM.md](./docs/DIAGRAM.md) for detailed wiring.
+
+### Audio System Configuration
+
+The firmware uses a PSRAM ring buffer for TTS playback:
+
+```cpp
+// Audio buffer configuration (firmware/src/audio.cpp)
+#define AUDIO_SAMPLE_RATE       16000   // 16kHz for voice
+#define AUDIO_RING_BUFFER_SIZE  (16000 * 60)  // 60 seconds (~1MB in PSRAM)
+#define VAD_THRESHOLD           300     // RMS energy threshold
+#define VAD_HOLDOFF_MS          800     // Silence detection delay
+```
+
+The gateway server applies gain to ElevenLabs TTS output:
+
+```typescript
+// TTS gain configuration (apps/web/src/websocket/voice-handler.ts)
+const ttsResult = await synthesizeSpeech({
+  outputFormat: "pcm_16000",  // 16kHz PCM for ESP32
+  useSpeakerBoost: true,      // ElevenLabs speaker boost
+  gain: 1.5,                  // 1.5x volume boost (prevents clipping)
+});
+```
 
 ---
 
@@ -298,16 +405,43 @@ Not an engineer? Purchase ready-to-use Mote devices from [Nebaura Labs](https://
 - Hold BOOT button while resetting to enter download mode
 - Check USB cable supports data (not just charging)
 - Verify correct COM port selected
+- Close serial monitor before uploading
 
 ### Display Not Working
-- Check backlight pin (GPIO17) is HIGH
+- Check backlight pin (GPIO 8) is HIGH
 - Verify SPI wiring matches pin configuration
 - Test with simple TFT_eSPI example first
 
-### No Audio
+### No Audio Output
 - Ensure amplifier has 5V power
 - Verify I2S pins match configuration
 - Check speaker polarity
+- Check serial logs for `[Audio] Buffer underrun` messages
+
+### Audio Issues
+
+| Symptom | Cause | Solution |
+|---------|-------|----------|
+| Loud noise on startup | Uninitialized buffer | Fixed in latest firmware (memset + bufferReady flag) |
+| Choppy/stuttering | Buffer underruns | Increase `AUDIO_RING_BUFFER_SIZE` or check WiFi |
+| Audio cuts off early | Buffer overflow | Buffer size is 60 seconds, increase if needed |
+| Static/distortion | Gain too high | Reduce `gain` in voice-handler.ts (default 1.5x) |
+| Quiet audio | Gain too low | Increase `gain` or enable `useSpeakerBoost` |
+
+### Voice Chat Issues
+
+| Symptom | Cause | Solution |
+|---------|-------|----------|
+| No transcription | Deepgram API key invalid | Check `DEEPGRAM_API_KEY` in .env |
+| No TTS response | ElevenLabs key/voice invalid | Check `ELEVENLABS_API_KEY` and voice ID |
+| WebSocket disconnects | Network issues | Check WiFi signal, gateway server logs |
+| VAD not triggering | Threshold too high | Reduce `VAD_THRESHOLD` in audio.cpp |
+| VAD always active | Threshold too low | Increase `VAD_THRESHOLD` (default 300) |
+
+### BLE Configuration
+- Mote advertises as "Mote" when no WiFi config is saved
+- Use the mobile app to configure WiFi and gateway settings
+- Device restarts automatically after saving configuration
 
 **More help:** Check the [Issues](https://github.com/nebaura-labs/mote-firmware/issues) or contact support
 
@@ -317,9 +451,12 @@ Not an engineer? Purchase ready-to-use Mote devices from [Nebaura Labs](https://
 
 Built with:
 - **ESP-IDF** and **Arduino Framework** by Espressif
-- **PlatformIO** for build system
-- **TFT_eSPI** for display rendering
-- **Picovoice Porcupine** for wake word detection
+- **PlatformIO** for firmware build system
+- **TFT_eSPI** / **LovyanGFX** for display rendering
+- **Deepgram** for real-time speech-to-text
+- **ElevenLabs** for natural text-to-speech
+- **TanStack Start** for the gateway server
+- **Expo** and **React Native** for the mobile app
 
 Inspired by the open hardware community and the vision of personal AI companions that respect privacy and user control.
 

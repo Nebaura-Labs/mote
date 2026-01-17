@@ -250,6 +250,135 @@ bool detectWakeWord(int16_t* samples) {
 - **Channels:** Mono (single channel)
 - **Byte Order:** Little-endian
 
+### ElevenLabs TTS Format
+The gateway server requests audio in `pcm_16000` format from ElevenLabs:
+- 16kHz sample rate
+- 16-bit signed PCM
+- Mono channel
+- No header (raw PCM)
+
+This format is directly compatible with the ESP32 I2S amplifier.
+
+## PSRAM Ring Buffer for TTS Playback
+
+The firmware uses a large ring buffer in PSRAM for buffered TTS playback. This allows the ESP32 to receive audio data over WebSocket while simultaneously playing it back without gaps.
+
+### Configuration
+
+```cpp
+// Buffer size: 60 seconds of audio at 16kHz (~1MB in PSRAM)
+#define AUDIO_RING_BUFFER_SIZE  (16000 * 60)
+
+// Ring buffer state
+static int16_t* audioRingBuffer = NULL;        // Allocated in PSRAM
+static volatile size_t bufferWriteIndex = 0;   // Next write position
+static volatile size_t bufferReadIndex = 0;    // Next read position
+static volatile size_t bufferAvailable = 0;    // Samples available to read
+static volatile bool bufferPlaying = false;    // Currently playing flag
+static volatile bool streamFinished = false;   // TTS stream complete flag
+static volatile bool bufferReady = false;      // Set after initialization
+```
+
+### Buffer Initialization
+
+```cpp
+bool initRingBuffer() {
+    // Allocate in PSRAM (external memory)
+    audioRingBuffer = (int16_t*)ps_malloc(AUDIO_RING_BUFFER_SIZE * sizeof(int16_t));
+
+    if (audioRingBuffer) {
+        // CRITICAL: Zero out buffer to prevent playing garbage on startup
+        memset(audioRingBuffer, 0, AUDIO_RING_BUFFER_SIZE * sizeof(int16_t));
+
+        bufferWriteIndex = 0;
+        bufferReadIndex = 0;
+        bufferAvailable = 0;
+        bufferPlaying = false;
+        streamFinished = false;
+
+        // Mark buffer as ready LAST, after everything is initialized
+        bufferReady = true;
+        return true;
+    }
+    return false;
+}
+```
+
+### Queuing Audio Data
+
+Audio data received over WebSocket is queued to the ring buffer:
+
+```cpp
+size_t queueAudioData(const int16_t* data, size_t sampleCount) {
+    if (!bufferReady || !audioRingBuffer) return 0;
+
+    size_t queued = 0;
+    for (size_t i = 0; i < sampleCount; i++) {
+        if (bufferAvailable >= AUDIO_RING_BUFFER_SIZE) {
+            // Buffer full - drop samples
+            break;
+        }
+        audioRingBuffer[bufferWriteIndex] = data[i];
+        bufferWriteIndex = (bufferWriteIndex + 1) % AUDIO_RING_BUFFER_SIZE;
+        bufferAvailable++;
+        queued++;
+    }
+    return queued;
+}
+```
+
+### Playback Task
+
+A FreeRTOS task handles continuous playback:
+
+```cpp
+void audioPlaybackTask(void* parameter) {
+    int16_t playBuffer[256];
+
+    while (true) {
+        if (!bufferReady) {
+            vTaskDelay(pdMS_TO_TICKS(10));
+            continue;
+        }
+
+        if (bufferPlaying && bufferAvailable > 0) {
+            // Read from ring buffer
+            size_t toRead = min(256, bufferAvailable);
+            for (size_t i = 0; i < toRead; i++) {
+                playBuffer[i] = audioRingBuffer[bufferReadIndex];
+                bufferReadIndex = (bufferReadIndex + 1) % AUDIO_RING_BUFFER_SIZE;
+            }
+            bufferAvailable -= toRead;
+
+            // Write to I2S
+            size_t bytesWritten;
+            i2s_write(I2S_NUM_1, playBuffer, toRead * sizeof(int16_t), &bytesWritten, portMAX_DELAY);
+        } else if (bufferPlaying && bufferAvailable == 0) {
+            // Buffer underrun handling with timeout
+            static uint32_t underrunCount = 0;
+            underrunCount++;
+
+            if (underrunCount % 20 == 1) {
+                Serial.printf("[Audio] Buffer underrun #%d, waiting...\n", underrunCount);
+            }
+
+            vTaskDelay(pdMS_TO_TICKS(50));  // Wait for more data
+
+            // Timeout after 5 seconds of underruns
+            if (underrunCount > 100) {
+                Serial.println("[Audio] Underrun timeout - stopping playback");
+                bufferPlaying = false;
+                streamFinished = false;
+                underrunCount = 0;
+                i2s_zero_dma_buffer(I2S_NUM_1);
+            }
+        } else {
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+    }
+}
+```
+
 ### Converting Sample Rates
 
 ```cpp
@@ -279,17 +408,54 @@ void decimateSamples(int16_t* input, int16_t* output, size_t inputCount) {
 3. **Check volume:** Ensure volume > 0
 4. **Test I2S:** Verify data is being written with `i2s_write()`
 
-### Distorted Audio
+### Loud Noise on Startup
 
-1. **Lower volume:** Reduce software volume to prevent clipping
-2. **Check sample rate:** Ensure input and output rates match
-3. **Check speaker:** 3W speaker may distort at high volumes
+**Symptom:** Speaker plays loud static/garbage audio ~10 seconds after boot.
+
+**Cause:** Uninitialized PSRAM buffer contains random data that gets played.
+
+**Solution:** The firmware now:
+1. Uses `memset()` to zero the buffer after allocation
+2. Calls `i2s_zero_dma_buffer()` during amplifier initialization
+3. Uses a `bufferReady` flag to prevent playback before initialization completes
+
+### Buffer Underruns (Choppy Audio)
+
+**Symptom:** Audio stutters or has gaps, serial log shows "Buffer underrun" messages.
+
+**Cause:** Network latency or WiFi issues causing data to arrive slower than playback.
+
+**Solutions:**
+1. Ensure strong WiFi signal
+2. Increase buffer size (currently 60 seconds)
+3. Check gateway server isn't overloaded
+
+### Buffer Overflow (Audio Cuts Off)
+
+**Symptom:** Long TTS responses get cut off, serial log shows dropped samples.
+
+**Cause:** Buffer too small for the response length.
+
+**Solution:** Increase `AUDIO_RING_BUFFER_SIZE`. Current setting is 60 seconds (~1MB in PSRAM).
+
+### Distorted/Static Audio
+
+**Symptom:** Audio has static, crackling, or sounds distorted.
+
+**Cause:** Usually gain is set too high, causing clipping.
+
+**Solutions:**
+1. Reduce `gain` parameter in voice-handler.ts (default 1.5x)
+2. Disable `useSpeakerBoost` if still clipping
+3. Check sample rate matches (should be 16kHz)
+4. Verify speaker impedance (should be 4Ω)
 
 ### Poor Microphone Quality
 
 1. **Increase sample rate:** Try 44.1kHz or 48kHz
 2. **Add noise filtering:** Implement high-pass filter for wind noise
 3. **Adjust position:** Keep microphone away from speaker to prevent feedback
+4. **Check VAD threshold:** If voice isn't detected, lower `VAD_THRESHOLD`
 
 ## Performance Considerations
 

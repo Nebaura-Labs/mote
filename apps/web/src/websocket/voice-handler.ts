@@ -23,7 +23,8 @@ interface VoiceSession {
   ws: WebSocket;
   userId: string;
   deviceId: string;
-  sessionKey: string; // Persistent session key for Gateway (Discord format)
+  sessionKey: string; // Current session key for Gateway (Discord format)
+  lastCommandTime: number; // Timestamp of last command (for timeout)
   voiceConfig: {
     deepgramApiKey: string;
     elevenlabsApiKey: string;
@@ -197,6 +198,7 @@ async function handleTextMessage(
         userId,
         deviceId,
         sessionKey,
+        lastCommandTime: 0, // Initialize to 0, will be set on first command
         voiceConfig: {
           deepgramApiKey: decrypt(config.deepgramApiKey),
           elevenlabsApiKey: decrypt(config.elevenlabsApiKey),
@@ -273,15 +275,35 @@ async function handleTextMessage(
 /**
  * Handle binary audio data from device
  */
+let audioPacketCount = 0;
+let lastAudioLogTime = Date.now();
+
 async function handleAudioData(deviceId: string, audio: Buffer) {
+  // Debug: Log audio packet reception periodically
+  audioPacketCount++;
+  const now = Date.now();
+  if (now - lastAudioLogTime > 5000) {
+    console.log(`[voice-ws] Audio packets received in last 5s: ${audioPacketCount}, deviceId: "${deviceId}", buffer size: ${audio.length}`);
+    audioPacketCount = 0;
+    lastAudioLogTime = now;
+  }
+
+  if (!deviceId) {
+    console.log(`[voice-ws] Dropping audio: no deviceId set yet`);
+    return;
+  }
+
   const session = voiceSessions.get(deviceId);
   if (!session) {
+    console.log(`[voice-ws] Dropping audio: no session for device ${deviceId}`);
     return;
   }
 
   // Send audio to Deepgram for transcription
   if (session.transcription && session.transcription.isConnected()) {
     session.transcription.sendAudio(audio);
+  } else {
+    console.log(`[voice-ws] Dropping audio: Deepgram not connected for device ${deviceId}`);
   }
 }
 
@@ -313,8 +335,20 @@ async function startTranscription(session: VoiceSession) {
     });
   });
 
-  transcription.on("close", () => {
+  transcription.on("close", async () => {
     console.log(`[voice-ws] Deepgram closed for device ${session.deviceId}`);
+    session.transcription = null;
+
+    // Auto-reconnect if session is still active (allow during speaking for next wake word)
+    if (voiceSessions.has(session.deviceId)) {
+      console.log(`[voice-ws] Auto-reconnecting Deepgram for device ${session.deviceId}...`);
+      try {
+        await startTranscription(session);
+        console.log(`[voice-ws] Deepgram reconnected for device ${session.deviceId}`);
+      } catch (error) {
+        console.error(`[voice-ws] Failed to reconnect Deepgram:`, error);
+      }
+    }
   });
 
   await transcription.start();
@@ -348,6 +382,12 @@ function handleTranscript(
 
   // Check for wake word (using normalized text without punctuation)
   if (!session.wakeWordDetected && normalizedText.includes(session.voiceConfig.wakeWord)) {
+    // Don't accept new wake words while still processing/speaking
+    if (session.state !== "idle") {
+      console.log(`[voice-ws] Wake word detected but session busy (state: ${session.state}), ignoring`);
+      return;
+    }
+
     console.log(`[voice-ws] Wake word detected: "${session.voiceConfig.wakeWord}"`);
     session.wakeWordDetected = true;
     session.state = "listening";
@@ -412,6 +452,18 @@ async function processCommand(session: VoiceSession) {
     let responseText = "";
 
     if (session.gatewayClient && session.gatewayClient.isClientConnected()) {
+      // Check if conversation has timed out (5 minutes = 300000ms)
+      const now = Date.now();
+      const CONVERSATION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+      
+      if (session.lastCommandTime > 0 && (now - session.lastCommandTime) > CONVERSATION_TIMEOUT_MS) {
+        // Timeout exceeded - start fresh conversation with new session key
+        session.sessionKey = `agent:main:discord:channel:mote-${crypto.randomUUID().substring(0, 8)}`;
+        console.log(`[voice-ws] Conversation timeout - new session: ${session.sessionKey}`);
+      }
+      
+      session.lastCommandTime = now;
+      
       responseText = await sendToGateway(
         session.gatewayClient,
         session.sessionKey,
@@ -430,26 +482,48 @@ async function processCommand(session: VoiceSession) {
     });
 
     // Synthesize speech with ElevenLabs
+    console.log(`[voice-ws] Starting TTS synthesis - apiKey: ${session.voiceConfig.elevenlabsApiKey ? 'present' : 'MISSING'}, voiceId: ${session.voiceConfig.elevenlabsVoiceId || 'MISSING'}`);
     session.state = "speaking";
     const ttsResult = await synthesizeSpeech({
       apiKey: session.voiceConfig.elevenlabsApiKey,
       text: responseText,
       voiceId: session.voiceConfig.elevenlabsVoiceId,
       outputFormat: "pcm_16000", // PCM for ESP32 playback
+      useSpeakerBoost: true,     // ElevenLabs speaker boost for clarity
+      gain: 1.5,                 // 1.5x volume boost (lower to prevent clipping distortion)
     });
+    console.log(`[voice-ws] TTS synthesis complete - audio length: ${ttsResult.audio.length} bytes`);
 
-    // Send audio to device in chunks (8KB chunks for ESP32)
-    const CHUNK_SIZE = 8192;
+    // Send all audio at once - ESP32 has a 20-second ring buffer in PSRAM
+    // that handles pacing automatically via the playback task
+    const CHUNK_SIZE = 8192;  // 8KB chunks for WebSocket transmission
+
+    const chunks: Buffer[] = [];
     for (let i = 0; i < ttsResult.audio.length; i += CHUNK_SIZE) {
-      const chunk = ttsResult.audio.subarray(i, i + CHUNK_SIZE);
-      session.ws.send(chunk);
+      chunks.push(ttsResult.audio.subarray(i, i + CHUNK_SIZE));
     }
 
-    // Done
+    // Send all chunks immediately - ESP32 ring buffer handles timing
+    for (let i = 0; i < chunks.length; i++) {
+      session.ws.send(chunks[i]);
+    }
+    console.log(`[voice-ws] Sent all ${chunks.length} chunks (${ttsResult.audio.length} bytes) to device`);
+
+    // Small delay to let WebSocket flush before sending done message
+    await new Promise<void>((resolve) => setTimeout(resolve, 100));
+
+    // Done - completely reset for next interaction
     session.wakeWordDetected = false;
     session.commandBuffer = "";
     session.transcriptBuffer = "";
     session.state = "idle";
+    
+    // Ensure Deepgram is ready for next wake word
+    if (session.transcription && session.transcription.isConnected()) {
+      // Finalize current transcription to clear any pending data
+      session.transcription.finalize();
+    }
+    
     sendMessage(session.ws, { type: "voice.done" });
 
   } catch (error) {

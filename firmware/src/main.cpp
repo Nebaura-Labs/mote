@@ -77,12 +77,16 @@ void onVoiceTranscript(const char* text) {
 }
 
 /**
- * Voice audio callback - plays TTS response
+ * Voice audio callback - queues TTS response for buffered playback
  */
 void onVoiceAudio(const uint8_t* data, size_t length) {
-  // Data is PCM 16-bit 16kHz mono
+  // Data is PCM 16-bit from ElevenLabs at 16kHz (pcm_16000 format)
   size_t sampleCount = length / sizeof(int16_t);
-  playAudioData((const int16_t*)data, sampleCount);
+  size_t queued = queueAudioData((const int16_t*)data, sampleCount);
+  
+  if (queued < sampleCount) {
+    Serial.printf("[Voice] Warning: Only queued %d/%d samples\n", queued, sampleCount);
+  }
 }
 
 /**
@@ -226,6 +230,8 @@ void loop() {
       audioInitialized = setupAudio();
       if (audioInitialized) {
         Serial.println("[Audio] Audio initialized successfully");
+        // Start buffered playback task for smooth TTS audio
+        startAudioPlaybackTask();
       } else {
         Serial.println("[Audio] Audio initialization failed!");
       }
@@ -271,19 +277,48 @@ void loop() {
 
       // Stream audio continuously for server-side wake word detection
       VoiceState voiceState = getVoiceState();
+
+      // Debug: Log voice state periodically
+      static unsigned long lastStateLog = 0;
+      if (millis() - lastStateLog > 3000) {
+        Serial.printf("[Voice] State: %d (0=DISCONNECTED, 1=IDLE, 2=LISTENING, 3=PROCESSING, 4=SPEAKING)\n", voiceState);
+        lastStateLog = millis();
+      }
+
       if (voiceState == VOICE_IDLE || voiceState == VOICE_LISTENING) {
         size_t samplesRead = readMicrophoneData(audioBuffer, AUDIO_BUFFER_SIZE);
         if (samplesRead > 0) {
           // Always send audio to server for transcription
-          sendVoiceAudio(audioBuffer, samplesRead);
+          bool sent = sendVoiceAudio(audioBuffer, samplesRead);
+
+          // Debug: Log audio sending periodically
+          static unsigned long lastAudioLog = 0;
+          static size_t audioSentCount = 0;
+          audioSentCount++;
+          if (millis() - lastAudioLog > 5000) {
+            Serial.printf("[Voice] Audio packets sent in last 5s: %d, last send success: %s\n",
+                         audioSentCount, sent ? "true" : "false");
+            audioSentCount = 0;
+            lastAudioLog = millis();
+          }
 
           // Use VAD only to detect end of speech (for processing trigger)
           bool voiceDetected = detectVoiceActivity(audioBuffer, samplesRead);
+
+          // Debug: Log VAD state periodically
+          static unsigned long lastVadLog = 0;
+          if (millis() - lastVadLog > 3000) {
+            Serial.printf("[VAD] voiceDetected=%d, wasVoiceActive=%d, timeSinceActivity=%lums\n",
+                         voiceDetected, wasVoiceActive, wasVoiceActive ? (millis() - lastVoiceActivity) : 0);
+            lastVadLog = millis();
+          }
+
           if (voiceDetected) {
             lastVoiceActivity = millis();
             wasVoiceActive = true;
           } else if (wasVoiceActive && (millis() - lastVoiceActivity > VAD_HOLDOFF_MS)) {
             // Voice stopped after speaking - notify server to process
+            Serial.println("[VAD] Silence detected - sending voice.silence");
             sendVoiceSilence();
             wasVoiceActive = false;
           }

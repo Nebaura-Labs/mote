@@ -3,7 +3,7 @@ import React, { useCallback, useEffect } from "react";
 import { Text, View, useColorScheme } from "react-native";
 import { Chat, GitFork, List, Gear, WifiHigh } from "phosphor-react-native";
 import { LoadingScreen } from "@/components/loading-screen";
-import { BridgeStatusBadge } from "@/components/BridgeStatusIndicator";
+import { HeaderStatusBar } from "@/components/HeaderStatusBar";
 import { useAuth } from "@/contexts/auth-context";
 import { useBridge } from "@/contexts/BridgeContext";
 import { useRouter, useRootNavigationState } from "expo-router";
@@ -27,7 +27,7 @@ function DrawerLayout() {
 
   const renderHeaderRight = useCallback(() => (
     <View style={{ marginRight: 16 }}>
-      <BridgeStatusBadge />
+      <HeaderStatusBar />
     </View>
   ), []);
 
