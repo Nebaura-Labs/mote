@@ -30,7 +30,19 @@ This folder contains clawd.bot tools for controlling Mote devices.
    npm run build
    ```
 
-4. Restart your Gateway to pick up the new tool.
+4. If running with Docker, rebuild the image:
+   ```bash
+   docker build -t clawdbot .
+   ```
+
+5. Restart your Gateway to pick up the new tool:
+   ```bash
+   # If using Docker Compose
+   docker-compose up -d --build
+
+   # Or restart the container manually
+   docker restart clawdbot
+   ```
 
 ## Available Actions
 
