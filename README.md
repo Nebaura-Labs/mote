@@ -92,15 +92,23 @@ The **Mote** is a voice assistant companion device that brings your personal AI 
 
 ### Hardware Requirements
 
-- ESP32-S3 N16R8 DevKit (or compatible)
-- Waveshare 2" IPS LCD (ST7789, 240×320)
-- INMP441 I2S Microphone
-- MAX98357A I2S Amplifier
-- 4Ω 3W Speaker
-- 3.7V LiPo Battery + TP4056 Charger
-- Buttons and basic components
+| Component | Description | Link |
+|-----------|-------------|------|
+| **ESP32-S3 N16R8** | DevKit with 16MB Flash, 8MB PSRAM | [Amazon](https://amzn.to/49IV37N) |
+| **2" IPS LCD** | ST7789 240×320 display | [Amazon](https://amzn.to/4sM214o) |
+| **INMP441** | I2S MEMS microphone | [Amazon](https://amzn.to/3NPToFV) |
+| **MAX98357A** | I2S 3W amplifier | [Amazon](https://amzn.to/4a4XkKL) |
+| **3W Speakers** | 4Ω mini speakers | [Amazon](https://amzn.to/4b15Yfj) |
+| **LiPo Battery** | 3.7V rechargeable | [Amazon](https://amzn.to/49xnmWo) |
+| **TP4056 Charger** | USB-C LiPo charging module | [Amazon](https://amzn.to/4qrIwfS) |
+| **Resistor Kit** | For voltage divider (100kΩ) | [Amazon](https://amzn.to/3YG6ubf) |
+| **Breadboards** | For prototyping | [Amazon](https://amzn.to/3YKnZaq) |
+| **PCB Boards** | For permanent assembly | [Amazon](https://amzn.to/49G8ncN) |
+| **Dupont Wires** | Jumper wires for connections | [Amazon](https://amzn.to/4qZzqXQ) |
 
-**Full parts list and wiring guide:** Available with official Nebaura Labs hardware kits at [nebaura.studio](https://nebaura.studio)
+**Estimated cost:** ~$50-75 for all components
+
+**Full wiring guide:** See [docs/DIAGRAM.md](./docs/DIAGRAM.md) for complete wiring specification
 
 ### Software Setup
 
