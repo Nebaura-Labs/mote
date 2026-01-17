@@ -14,7 +14,7 @@
 
 Connect to your personal AI powered by [clawd.bot](https://clawd.bot) through a physical device with an animated face, voice interaction, and tactile controls.
 
-**Live Demo:** Mote connects to your own AI gateway with real-time voice chat using **Deepgram** for speech-to-text and **ElevenLabs** for text-to-speech.
+**Live Demo:** Mote connects to your clawd.bot instance with real-time voice chat using **Deepgram** for speech-to-text and **ElevenLabs** for text-to-speech.
 
 ---
 
@@ -25,7 +25,7 @@ The **Mote** is a voice assistant companion device that brings your personal AI 
 - 🎨 **Animated Face Display** - 2" IPS LCD with expressive character that reacts to conversation
 - 🎤 **Real-time Voice Chat** - Stream audio to the cloud for instant transcription via Deepgram
 - 🔊 **Natural TTS Responses** - High-quality voice synthesis via ElevenLabs with buffered playback
-- 🧠 **AI-Powered Conversations** - Connect to clawd.bot or any AI gateway
+- 🧠 **AI-Powered Conversations** - Connect to your clawd.bot instance
 - 📱 **Mobile App Configuration** - Easy BLE setup via React Native app
 - 🔋 **Battery Powered** - Portable with LiPo battery and USB-C charging
 - 🌐 **WiFi + WebSocket** - Direct connection to your gateway server
@@ -54,7 +54,7 @@ The **Mote** is a voice assistant companion device that brings your personal AI 
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────┐      ┌──────────────────┐      ┌─────────────────────────┐
-│   Mote Device    │      │   Gateway Server │      │   External Services     │
+│   Mote Device    │      │   Gateway Server │      │   clawd.bot + Services  │
 │   (ESP32-S3)     │      │   (apps/web)     │      │                         │
 ├──────────────────┤      ├──────────────────┤      ├─────────────────────────┤
 │ • INMP441 Mic    │─────►│ • WebSocket      │─────►│ • Deepgram (STT)        │
@@ -80,7 +80,7 @@ The **Mote** is a voice assistant companion device that brings your personal AI 
 2. Gateway pipes audio to Deepgram for real-time transcription
 3. On wake word detection, server captures user's command
 4. Voice Activity Detection (VAD) on ESP32 detects end of speech
-5. Transcribed text sent to clawd.bot AI for response
+5. Transcribed text sent to your clawd.bot instance for AI response
 6. Response synthesized via ElevenLabs TTS (pcm_16000 format)
 7. PCM audio streamed back to Mote over WebSocket
 8. Mote plays audio from 60-second PSRAM ring buffer
@@ -92,15 +92,23 @@ The **Mote** is a voice assistant companion device that brings your personal AI 
 
 ### Hardware Requirements
 
-- ESP32-S3 N16R8 DevKit (or compatible)
-- Waveshare 2" IPS LCD (ST7789, 240×320)
-- INMP441 I2S Microphone
-- MAX98357A I2S Amplifier
-- 4Ω 3W Speaker
-- 3.7V LiPo Battery + TP4056 Charger
-- Buttons and basic components
+| Component | Description | Link |
+|-----------|-------------|------|
+| **ESP32-S3 N16R8** | DevKit with 16MB Flash, 8MB PSRAM | [Amazon](https://amzn.to/49IV37N) |
+| **2" IPS LCD** | ST7789 240×320 display | [Amazon](https://amzn.to/4sM214o) |
+| **INMP441** | I2S MEMS microphone | [Amazon](https://amzn.to/3NPToFV) |
+| **MAX98357A** | I2S 3W amplifier | [Amazon](https://amzn.to/4a4XkKL) |
+| **3W Speakers** | 4Ω mini speakers | [Amazon](https://amzn.to/4b15Yfj) |
+| **LiPo Battery** | 3.7V rechargeable | [Amazon](https://amzn.to/49xnmWo) |
+| **TP4056 Charger** | USB-C LiPo charging module | [Amazon](https://amzn.to/4qrIwfS) |
+| **Resistor Kit** | For voltage divider (100kΩ) | [Amazon](https://amzn.to/3YG6ubf) |
+| **Breadboards** | For prototyping | [Amazon](https://amzn.to/3YKnZaq) |
+| **PCB Boards** | For permanent assembly | [Amazon](https://amzn.to/49G8ncN) |
+| **Dupont Wires** | Jumper wires for connections | [Amazon](https://amzn.to/4qZzqXQ) |
 
-**Full parts list and wiring guide:** Available with official Nebaura Labs hardware kits at [nebaura.studio](https://nebaura.studio)
+**Estimated cost:** ~$50-75 for all components
+
+**Full wiring guide:** See [docs/DIAGRAM.md](./docs/DIAGRAM.md) for complete wiring specification
 
 ### Software Setup
 
@@ -176,7 +184,7 @@ mote/
 │   │       └── elevenlabs.ts # ElevenLabs TTS with PCM gain
 │   └── shared/               # Shared types and constants
 │
-├── package.json              # Root workspace config (pnpm)
+├── package.json              # Root workspace config (bun)
 ├── turbo.json                # Turborepo pipeline
 └── README.md                 # This file
 ```
@@ -189,21 +197,23 @@ To run the full voice chat system, you need API keys from:
 
 | Service | Purpose | Get Key |
 |---------|---------|---------|
+| **clawd.bot** | AI backend for conversations | [clawd.bot](https://clawd.bot) |
 | **Deepgram** | Real-time speech-to-text | [deepgram.com](https://deepgram.com) |
 | **ElevenLabs** | Text-to-speech synthesis | [elevenlabs.io](https://elevenlabs.io) |
-| **clawd.bot** | AI gateway (optional) | [clawd.bot](https://clawd.bot) |
 
 Create a `.env` file in `apps/web/`:
 
 ```bash
 # apps/web/.env
+
+# clawd.bot - Required
+CLAWD_API_KEY=your_clawd_key
+CLAWD_ENDPOINT=https://your-instance.clawd.bot
+
+# Voice services
 DEEPGRAM_API_KEY=your_deepgram_key
 ELEVENLABS_API_KEY=your_elevenlabs_key
 ELEVENLABS_VOICE_ID=your_voice_id  # e.g., "21m00Tcm4TlvDq8ikWAM"
-
-# Optional: clawd.bot integration
-CLAWD_API_KEY=your_clawd_key
-CLAWD_ENDPOINT=https://your-instance.clawd.bot
 ```
 
 ---
@@ -213,8 +223,8 @@ CLAWD_ENDPOINT=https://your-instance.clawd.bot
 ### Setup
 
 ```bash
-# Install dependencies
-pnpm install
+# Install dependencies (uses bun)
+bun install
 
 # Set up environment
 cp apps/web/.env.example apps/web/.env
@@ -225,61 +235,54 @@ cp apps/web/.env.example apps/web/.env
 
 ```bash
 # Run all dev servers (web + native)
-pnpm dev
+bun run dev
 
 # Build all packages
-pnpm build
+bun run build
 
-# Lint all packages
-pnpm lint
+# Run web app only
+bun run dev:web
 
-# Format code
-pnpm format
+# Run native app only
+bun run dev:native
 ```
 
-### Gateway Server Development (apps/web)
+### Gateway Server (apps/web)
+
+See [apps/web/README.md](./apps/web/README.md) for full documentation.
 
 ```bash
 # Start gateway server with WebSocket
-pnpm web:dev
+bun run dev:web
 # Server runs on http://localhost:3000
 # WebSocket voice endpoint: ws://localhost:3000/voice
-
-# Build for production
-pnpm web:build
 ```
 
-### Firmware Development (ESP32-S3)
+### Mobile App (apps/native)
 
-```bash
-# Build firmware
-pnpm firmware:build
-# Or: cd firmware && pio run
-
-# Upload to device
-pnpm firmware:upload
-# Or: cd firmware && pio run -t upload
-
-# Monitor serial output
-pnpm firmware:monitor
-# Or: cd firmware && pio device monitor
-
-# All at once
-cd firmware && pio run -t upload && pio device monitor
-```
-
-### Mobile App Development (apps/native)
+See [apps/native/README.md](./apps/native/README.md) for full documentation.
 
 ```bash
 # Start Expo dev server
+bun run dev:native
+
+# Or run directly
 cd apps/native
-pnpm start
+bun start
+bun ios      # iOS simulator
+bun android  # Android emulator
+```
 
-# Run on iOS
-pnpm ios
+### Firmware (ESP32-S3)
 
-# Run on Android
-pnpm android
+See [firmware/CLAUDE.md](./firmware/CLAUDE.md) for full documentation.
+
+```bash
+cd firmware
+pio run                    # Build
+pio run -t upload          # Upload to device
+pio device monitor         # Serial monitor
+pio run -t upload && pio device monitor  # All at once
 ```
 
 ### Pin Configuration

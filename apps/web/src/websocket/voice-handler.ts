@@ -382,10 +382,17 @@ function handleTranscript(
 
   // Check for wake word (using normalized text without punctuation)
   if (!session.wakeWordDetected && normalizedText.includes(session.voiceConfig.wakeWord)) {
-    // Don't accept new wake words while still processing/speaking
-    if (session.state !== "idle") {
-      console.log(`[voice-ws] Wake word detected but session busy (state: ${session.state}), ignoring`);
+    // Don't accept new wake words while processing (AI generating response)
+    if (session.state === "processing") {
+      console.log(`[voice-ws] Wake word detected but AI is processing, ignoring`);
       return;
+    }
+
+    // If currently speaking, interrupt and start listening to new request
+    if (session.state === "speaking") {
+      console.log(`[voice-ws] Wake word detected during playback - INTERRUPTING`);
+      // Send interrupt signal to device to stop audio playback
+      sendMessage(session.ws, { type: "voice.interrupt" });
     }
 
     console.log(`[voice-ws] Wake word detected: "${session.voiceConfig.wakeWord}"`);

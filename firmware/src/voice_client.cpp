@@ -85,6 +85,13 @@ static void handleServerMessage(const char* payload, size_t length) {
         restartMicrophone();  // Restart microphone I2S for fresh wake word detection
         setVoiceState(VOICE_IDLE);
     }
+    else if (msgType == "voice.interrupt") {
+        // User said wake word while we were speaking - stop playback immediately
+        Serial.println("[Voice] Interrupt received - stopping playback");
+        clearAudioBuffer();   // Stop playback and clear buffer
+        restartMicrophone();  // Restart microphone for fresh capture
+        setVoiceState(VOICE_LISTENING);
+    }
     else if (msgType == "voice.error") {
         // Error occurred
         int errorStart = json.indexOf("\"error\":\"") + 9;
@@ -211,8 +218,11 @@ bool sendVoiceAudio(const int16_t* samples, size_t count) {
         return false;
     }
 
-    // Only stream audio when in IDLE or LISTENING state
-    if (currentVoiceState != VOICE_IDLE && currentVoiceState != VOICE_LISTENING) {
+    // Stream audio in IDLE, LISTENING, or SPEAKING state
+    // During SPEAKING, we still stream so the server can detect wake word to interrupt
+    if (currentVoiceState != VOICE_IDLE &&
+        currentVoiceState != VOICE_LISTENING &&
+        currentVoiceState != VOICE_SPEAKING) {
         return false;
     }
 
