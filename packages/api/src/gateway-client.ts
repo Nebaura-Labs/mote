@@ -315,10 +315,20 @@ export class GatewayClient {
         deviceFamily: "mote",
         caps: ["iot"],
         commands: [...MOTE_NODE_COMMANDS],
-        silent: true, // Don't require manual approval for Mote
-      });
+        silent: true,
+      }) as { status: string; request?: { requestId: string } };
 
       console.log(`[gateway-client] Node registration result:`, result);
+
+      // Auto-approve if pending (Mote is a trusted first-party device)
+      if (result.status === "pending" && result.request?.requestId) {
+        console.log(`[gateway-client] Auto-approving Mote node...`);
+        const approveResult = await this.request("node.pair.approve", {
+          requestId: result.request.requestId,
+        });
+        console.log(`[gateway-client] Node approved:`, approveResult);
+      }
+
       this.isNodeRegistered = true;
     } catch (error) {
       console.error(`[gateway-client] Failed to register node:`, error);
