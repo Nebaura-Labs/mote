@@ -191,9 +191,9 @@ mote/
 
 ---
 
-## 🔑 API Keys Required
+## 🔑 API Keys & Configuration
 
-To run the full voice chat system, you need API keys from:
+Each user configures their own API keys through the mobile app settings. You'll need accounts with:
 
 | Service | Purpose | Get Key |
 |---------|---------|---------|
@@ -201,19 +201,28 @@ To run the full voice chat system, you need API keys from:
 | **Deepgram** | Real-time speech-to-text | [deepgram.com](https://deepgram.com) |
 | **ElevenLabs** | Text-to-speech synthesis | [elevenlabs.io](https://elevenlabs.io) |
 
+**Note:** API keys are stored per-user in the database (encrypted), not as environment variables. Users enter their keys in the mobile app settings.
+
+### Server Environment Variables
+
 Create a `.env` file in `apps/web/`:
 
 ```bash
 # apps/web/.env
 
-# clawd.bot - Required
-CLAWD_API_KEY=your_clawd_key
-CLAWD_ENDPOINT=https://your-instance.clawd.bot
+# Database (Neon Postgres)
+DATABASE_URL=postgresql://user:password@host:5432/database
 
-# Voice services
-DEEPGRAM_API_KEY=your_deepgram_key
-ELEVENLABS_API_KEY=your_elevenlabs_key
-ELEVENLABS_VOICE_ID=your_voice_id  # e.g., "21m00Tcm4TlvDq8ikWAM"
+# Authentication
+BETTER_AUTH_SECRET=your-secret-here-at-least-32-characters-long
+BETTER_AUTH_URL=http://localhost:3001
+CORS_ORIGIN=http://localhost:8081
+
+# Encryption key for storing user API keys securely
+ENCRYPTION_KEY=your-encryption-key-here-at-least-32-characters
+
+# Environment
+NODE_ENV=development
 ```
 
 ---
