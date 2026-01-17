@@ -184,7 +184,7 @@ mote/
 │   │       └── elevenlabs.ts # ElevenLabs TTS with PCM gain
 │   └── shared/               # Shared types and constants
 │
-├── package.json              # Root workspace config (pnpm)
+├── package.json              # Root workspace config (bun)
 ├── turbo.json                # Turborepo pipeline
 └── README.md                 # This file
 ```
@@ -223,8 +223,8 @@ ELEVENLABS_VOICE_ID=your_voice_id  # e.g., "21m00Tcm4TlvDq8ikWAM"
 ### Setup
 
 ```bash
-# Install dependencies
-pnpm install
+# Install dependencies (uses bun)
+bun install
 
 # Set up environment
 cp apps/web/.env.example apps/web/.env
@@ -235,61 +235,54 @@ cp apps/web/.env.example apps/web/.env
 
 ```bash
 # Run all dev servers (web + native)
-pnpm dev
+bun run dev
 
 # Build all packages
-pnpm build
+bun run build
 
-# Lint all packages
-pnpm lint
+# Run web app only
+bun run dev:web
 
-# Format code
-pnpm format
+# Run native app only
+bun run dev:native
 ```
 
-### Gateway Server Development (apps/web)
+### Gateway Server (apps/web)
+
+See [apps/web/README.md](./apps/web/README.md) for full documentation.
 
 ```bash
 # Start gateway server with WebSocket
-pnpm web:dev
+bun run dev:web
 # Server runs on http://localhost:3000
 # WebSocket voice endpoint: ws://localhost:3000/voice
-
-# Build for production
-pnpm web:build
 ```
 
-### Firmware Development (ESP32-S3)
+### Mobile App (apps/native)
 
-```bash
-# Build firmware
-pnpm firmware:build
-# Or: cd firmware && pio run
-
-# Upload to device
-pnpm firmware:upload
-# Or: cd firmware && pio run -t upload
-
-# Monitor serial output
-pnpm firmware:monitor
-# Or: cd firmware && pio device monitor
-
-# All at once
-cd firmware && pio run -t upload && pio device monitor
-```
-
-### Mobile App Development (apps/native)
+See [apps/native/README.md](./apps/native/README.md) for full documentation.
 
 ```bash
 # Start Expo dev server
+bun run dev:native
+
+# Or run directly
 cd apps/native
-pnpm start
+bun start
+bun ios      # iOS simulator
+bun android  # Android emulator
+```
 
-# Run on iOS
-pnpm ios
+### Firmware (ESP32-S3)
 
-# Run on Android
-pnpm android
+See [firmware/CLAUDE.md](./firmware/CLAUDE.md) for full documentation.
+
+```bash
+cd firmware
+pio run                    # Build
+pio run -t upload          # Upload to device
+pio device monitor         # Serial monitor
+pio run -t upload && pio device monitor  # All at once
 ```
 
 ### Pin Configuration
