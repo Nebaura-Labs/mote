@@ -193,11 +193,26 @@ static void handleIoTHttp(const String& requestId, JsonObject& params) {
     }
 
     if (httpCode > 0) {
-        String response = http.getString();
-        Serial.printf("[IoT] HTTP response %d: %s\n", httpCode, response.substring(0, 100).c_str());
+        // Limit response size to prevent memory issues
+        int contentLength = http.getSize();
+        String response;
 
-        // Build response payload
-        StaticJsonDocument<512> payload;
+        if (contentLength > 4096) {
+            // Response too large, truncate
+            WiFiClient* stream = http.getStreamPtr();
+            char buffer[4097];
+            int bytesRead = stream->readBytes(buffer, 4096);
+            buffer[bytesRead] = '\0';
+            response = String(buffer) + "... (truncated)";
+            Serial.printf("[IoT] Response truncated from %d bytes\n", contentLength);
+        } else {
+            response = http.getString();
+        }
+
+        Serial.printf("[IoT] HTTP response %d: %.100s\n", httpCode, response.c_str());
+
+        // Build response payload with adequate buffer
+        StaticJsonDocument<5120> payload;
         payload["statusCode"] = httpCode;
         payload["body"] = response;
 
